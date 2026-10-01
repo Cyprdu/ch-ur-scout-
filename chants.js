@@ -11,7 +11,7 @@ window.CHANTS = [
    "B"
   ],
   "tempo": {
-   "bpm": 98,
+   "bpm": 86,
    "unit": 0.25
   },
   "order": [
@@ -55,7 +55,7 @@ window.CHANTS = [
    "B"
   ],
   "tempo": {
-   "bpm": 80,
+   "bpm": 56,
    "unit": 0.375
   },
   "order": [
@@ -126,7 +126,7 @@ window.CHANTS = [
    "B"
   ],
   "tempo": {
-   "bpm": 76,
+   "bpm": 100,
    "unit": 0.25
   },
   "order": [

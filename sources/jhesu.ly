@@ -16,7 +16,7 @@
 global = {
   \key c \major
   \time 6/8
-  \tempo "Résolu mais avec douceur" 4. = 80
+  \tempo "Résolu mais avec douceur" 4. = 56
   \sectionLabel "REFRAIN"
   s2.*8 \bar "||" \break
   \sectionLabel "COUPLETS"

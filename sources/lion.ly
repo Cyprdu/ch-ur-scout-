@@ -16,7 +16,7 @@
 global = {
   \key f \major
   \time 4/4
-  \tempo 4 = 76
+  \tempo 4 = 100
   \set Score.melismaBusyProperties = #'(tieMelismaBusy)
 }
 

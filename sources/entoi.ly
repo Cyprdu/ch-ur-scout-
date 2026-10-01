@@ -13,7 +13,7 @@
 global = {
   \key d \minor
   \time 4/4
-  \tempo 4 = 98
+  \tempo 4 = 86
   \sectionLabel "COUPLETS"
   \partial 8 s8 | s1*3 | s2. \bar "!" \break s4 | s1*3 |
   s2. \bar "||" \break

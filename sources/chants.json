@@ -6,7 +6,7 @@
     "category": "Méditation et confiance",
     "authors": "Paroles (d'après le Ps 13) et musique : Chants de l'Emmanuel (J.-F. Léost)",
     "voices": ["S", "A", "T", "B"],
-    "tempo": { "bpm": 98, "unit": 0.25 },
+    "tempo": { "bpm": 86, "unit": 0.25 },
     "order": [[0, 14.125], [14.875, 15.875]]
   },
   {
@@ -25,7 +25,7 @@
     "category": "",
     "authors": "Paroles : fr. David Perrin, op · Musique : fr. Clément Binachon, op",
     "voices": ["S", "A", "T", "B"],
-    "tempo": { "bpm": 80, "unit": 0.375 },
+    "tempo": { "bpm": 56, "unit": 0.375 },
     "order": [[0, 6], [6, 18], [0, 6], [18, 30], [0, 6]]
   },
   {
@@ -45,7 +45,7 @@
     "category": "",
     "authors": "Paroles et musique : Tanguy Dionis du Séjour · Arr. J.-C. Rosaz",
     "voices": ["Solo", "S", "A", "T", "B"],
-    "tempo": { "bpm": 76, "unit": 0.25 },
+    "tempo": { "bpm": 100, "unit": 0.25 },
     "order": [[0, 32], [10, 31], [32, 63]]
   },
   {
