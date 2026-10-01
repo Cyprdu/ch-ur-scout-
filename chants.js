@@ -14,7 +14,30 @@ window.CHANTS = [
    "bpm": 86,
    "unit": 0.25
   },
-  "order": [
+  "structure": {
+   "verses": 3,
+   "couplet": {
+    "*": [
+     [
+      0,
+      14.125
+     ]
+    ]
+   },
+   "between": [
+    [
+     14.125,
+     14.875
+    ]
+   ],
+   "last": [
+    [
+     14.875,
+     15.875
+    ]
+   ]
+  },
+  "legacyOrder": [
    [
     0,
     14.125
@@ -24,6 +47,7 @@ window.CHANTS = [
     15.875
    ]
   ],
+  "video": true,
   "nPages": 1
  },
  {
@@ -41,6 +65,24 @@ window.CHANTS = [
    "bpm": 65,
    "unit": 0.25
   },
+  "structure": {
+   "verses": 5,
+   "couplet": {
+    "*": [
+     [
+      0,
+      10.5
+     ]
+    ]
+   }
+  },
+  "legacyOrder": [
+   [
+    0,
+    10.5
+   ]
+  ],
+  "video": true,
   "nPages": 2
  },
  {
@@ -58,7 +100,42 @@ window.CHANTS = [
    "bpm": 56,
    "unit": 0.375
   },
-  "order": [
+  "structure": {
+   "verses": 8,
+   "intro": [
+    [
+     0,
+     6
+    ]
+   ],
+   "couplet": {
+    "1-4": [
+     [
+      6,
+      18
+     ]
+    ],
+    "5-8": [
+     [
+      18,
+      30
+     ]
+    ]
+   },
+   "between": [
+    [
+     0,
+     6
+    ]
+   ],
+   "last": [
+    [
+     0,
+     6
+    ]
+   ]
+  },
+  "legacyOrder": [
    [
     0,
     6
@@ -80,6 +157,7 @@ window.CHANTS = [
     6
    ]
   ],
+  "video": true,
   "nPages": 2
  },
  {
@@ -97,7 +175,36 @@ window.CHANTS = [
    "bpm": 65,
    "unit": 0.25
   },
-  "order": [
+  "structure": {
+   "verses": 6,
+   "intro": [
+    [
+     0,
+     6
+    ]
+   ],
+   "couplet": {
+    "*": [
+     [
+      6,
+      11.5
+     ]
+    ]
+   },
+   "between": [
+    [
+     0,
+     6
+    ]
+   ],
+   "last": [
+    [
+     0,
+     6
+    ]
+   ]
+  },
+  "legacyOrder": [
    [
     0,
     6
@@ -111,6 +218,7 @@ window.CHANTS = [
     6
    ]
   ],
+  "video": true,
   "nPages": 2
  },
  {
@@ -129,7 +237,42 @@ window.CHANTS = [
    "bpm": 100,
    "unit": 0.25
   },
-  "order": [
+  "structure": {
+   "verses": 2,
+   "names": {
+    "1": "Premier passage",
+    "2": "Reprise"
+   },
+   "intro": [
+    [
+     0,
+     10
+    ]
+   ],
+   "couplet": {
+    "*": [
+     [
+      10,
+      32
+     ]
+    ]
+   },
+   "lastCouplet": {
+    "*": [
+     [
+      10,
+      31
+     ]
+    ]
+   },
+   "outro": [
+    [
+     32,
+     63
+    ]
+   ]
+  },
+  "legacyOrder": [
    [
     0,
     32
@@ -143,6 +286,7 @@ window.CHANTS = [
     63
    ]
   ],
+  "video": true,
   "nPages": 6
  },
  {
@@ -160,6 +304,24 @@ window.CHANTS = [
    "bpm": 84,
    "unit": 0.25
   },
+  "structure": {
+   "verses": 7,
+   "couplet": {
+    "*": [
+     [
+      0,
+      12.875
+     ]
+    ]
+   }
+  },
+  "legacyOrder": [
+   [
+    0,
+    12.875
+   ]
+  ],
+  "video": true,
   "nPages": 1
  }
 ];

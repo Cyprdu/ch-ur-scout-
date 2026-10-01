@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=10">
 </head>
 <body>
 <header class="topbar">
@@ -29,19 +29,30 @@
       <h1 id="title"></h1>
       <p id="authors"></p>
     </div>
+    <div class="head-actions">
     <div class="zoom" title="Taille de la partition">
       <button id="zMinus" aria-label="Réduire la partition"></button>
       <span id="zVal">100 %</span>
       <button id="zPlus" aria-label="Agrandir la partition"></button>
     </div>
+    </div>
   </div>
+</section>
+
+<section class="choir-card" id="choirCard" hidden>
+  <div class="cc-icon" id="ccIcon"></div>
+  <div class="cc-text">
+    <strong id="ccTitle">Écoutez le chœur, la partition suit</strong>
+    <span id="ccSub">Un enregistrement du chant est synchronisé : les notes et les paroles s’allument en rouge au moment où elles sont chantées.</span>
+  </div>
+  <button class="btn primary cc-btn" id="videoBtn"></button>
 </section>
 
 <main class="score" id="score"><div class="score-inner" id="scoreInner"><div class="loading">Chargement de la partition…</div></div></main>
 
 <div class="dock" id="dock" hidden>
   <div class="progress" id="progress" title="Se déplacer dans le chant">
-    <div class="track"></div><div class="fill" id="pFill"></div><div class="knob" id="pKnob"></div>
+    <div class="track"></div><div class="segs" id="pSegs"></div><div class="fill" id="pFill"></div><div class="knob" id="pKnob"></div>
   </div>
   <div class="dock-inner">
     <div class="transport">
@@ -58,6 +69,14 @@
         <button id="tPlus" aria-label="Accélérer"></button>
       </div>
       <button class="icon-btn" id="metro" title="Métronome"></button>
+      <div class="struct-wrap">
+        <button class="btn struct-btn" id="structBtn" title="Couplets, reprises et paroles"></button>
+        <div class="struct-pop" id="structPop" hidden>
+          <div class="pop-head"><strong>Couplets et reprises</strong><button class="icon-btn sm" id="structClose" aria-label="Fermer">✕</button></div>
+          <div id="structEditor"></div>
+          <div class="pop-row" id="lyricsRow"><span>Paroles en rouge</span><select class="select" id="lyricsSel"></select></div>
+        </div>
+      </div>
       <select class="select" id="instr" title="Son">
         <option value="piano">Piano</option>
         <option value="organ">Orgue</option>
@@ -67,9 +86,10 @@
 </div>
 <div class="status" id="status"></div>
 
-<script src="assets/icons.js"></script>
-<script src="chants.js"></script>
+<script src="assets/icons.js?v=5"></script>
+<script>/* liste des chants toujours à jour (elle change à chaque publication) */document.write('<script src="chants.js?' + Date.now() + '"><\/script>')</script>
 <script src="assets/tone.js"></script>
-<script src="assets/player.js"></script>
+<script src="assets/core.js?v=11"></script>
+<script src="assets/player.js?v=9"></script>
 </body>
 </html>

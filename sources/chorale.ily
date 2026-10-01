@@ -47,6 +47,122 @@ voiceAttrs =
        #{ \with { \override NoteHead.stencil = #(note-link-stencil v) } #}
        #{ \with { } #}))
 
+% --- Paroles annotées pour le lecteur web (ignorées dans le PDF) ---
+% Chaque syllabe porte un lien « http://l/?ln=…&st=…&vc=…&t=…&tx=… » :
+% ligne de paroles, couplet (stanza), voix associée, instant et texte.
+% Chaque trait d'union porte « http://h/?ln=…&t=… » (syllabe suivie d'un tiret :
+% le mot continue), ce qui permet de regrouper les syllabes en mots.
+#(use-modules (rnrs bytevectors))
+#(define (chorale-url-escape str)
+   (string-concatenate
+    (map (lambda (b)
+           (let ((c (integer->char b)))
+             (if (and (< b 128)
+                      (or (char-alphabetic? c) (char-numeric? c) (memv c '(#\- #\_ #\. #\~))))
+                 (string c)
+                 (string-append "%" (if (< b 16) "0" "") (number->string b 16)))))
+         (bytevector->u8-list (string->utf8 str)))))
+
+#(define chorale-lyric-lines '())
+#(define (chorale-line-id ctx)
+   (let ((e (assq ctx chorale-lyric-lines)))
+     (if e (cdr e)
+         (let ((id (length chorale-lyric-lines)))
+           (set! chorale-lyric-lines (acons ctx id chorale-lyric-lines))
+           id))))
+
+#(define (Chorale_lyric_engraver context)
+   (make-engraver
+    ((initialize engraver) (chorale-line-id context))
+    (listeners
+     ;; « _ » (vocalise) ne crée pas de syllabe : on le note dans un fichier annexe
+     ((lyric-event engraver event)
+      (let ((tx (ly:event-property event 'text))
+            (file (getenv "CHORALE_MEL_FILE")))
+        (if (and file (string? tx) (string-null? (string-trim-both tx)))
+            (let ((port (open-file file "a")))
+              (format port "~a	~a
+" (chorale-line-id context)
+                      (chorale-num (ly:moment-main (ly:context-current-moment context))))
+              (close-port port))))))
+    (acknowledgers
+     ((lyric-syllable-interface engraver grob source-engraver)
+      (let ((st (ly:context-property context 'stanza #f))
+            (av (let ((vc (ly:context-property context 'associatedVoiceContext #f)))
+                  (if (ly:context? vc) (ly:context-id vc)
+                      (ly:context-property context 'associatedVoice #f)))))
+        (ly:grob-set-property! grob 'details
+          (append
+           `((chorale-line . ,(chorale-line-id context))
+             (chorale-stanza . ,(if (markup? st) (markup->string st) ""))
+             (chorale-voice . ,(if (string? av) av "")))
+           (ly:grob-property grob 'details '()))))))))
+
+#(define (chorale-num x) (number->string (exact->inexact x)))
+
+#(define (chorale-lyric-stencil grob)
+   (let ((s (lyric-text::print grob)))
+     (if (and (getenv "CHORALE_ANNOTATE") (ly:stencil? s) (not (ly:stencil-empty? s)))
+         (let* ((det (ly:grob-property grob 'details '()))
+                (txt (ly:grob-property grob 'text))
+                (str (if (markup? txt) (markup->string txt) ""))
+                (loc (grob::rhythmic-location grob))
+                (line (assq-ref det 'chorale-line)))
+           (if (not line)
+               s
+               (let ((url (string-append
+                           "http://l/?ln=" (number->string line)
+                           "&st=" (chorale-url-escape (or (assq-ref det 'chorale-stanza) ""))
+                           "&vc=" (chorale-url-escape (or (assq-ref det 'chorale-voice) ""))
+                           "&m=" (number->string (if (pair? loc) (car loc) 0))
+                           "&t=" (chorale-num (ly:moment-main (grob::when grob)))
+                           "&tx=" (chorale-url-escape str)))
+                     (x (ly:stencil-extent s X))
+                     (y (ly:stencil-extent s Y)))
+                 (ly:stencil-add s (ly:make-stencil (list 'url-link url x y) x y)))))
+         s)))
+
+#(define (chorale-spanner-link grob s prefix)
+   ;; Lien « http://<prefix>/?ln=…&t=… » sur la syllabe de gauche d'un trait (union ou prolongation)
+   (if (getenv "CHORALE_ANNOTATE")
+       (let* ((orig (ly:grob-original grob))
+              (left (and orig (ly:spanner-bound orig LEFT)))
+              (det (and (ly:grob? left) (ly:grob-property left 'details '())))
+              (line (and det (assq-ref det 'chorale-line))))
+         (if line
+             (ly:stencil-add
+              (if (ly:stencil? s) s empty-stencil)
+              (ly:make-stencil
+               (list 'url-link
+                     (string-append "http://" prefix "/?ln=" (number->string line)
+                                    "&t=" (chorale-num (ly:moment-main (grob::when left))))
+                     '(0 . 0.05) '(0 . 0.05))
+               '(0 . 0.01) '(0 . 0.01)))
+             s))
+       s))
+
+#(define (chorale-extender-stencil grob)
+   (chorale-spanner-link grob (ly:lyric-extender::print grob) "e"))
+
+#(define (chorale-hyphen-stencil grob)
+   (let ((s (ly:lyric-hyphen::print grob)))
+     (if (getenv "CHORALE_ANNOTATE")
+         (let* ((orig (ly:grob-original grob))
+                (left (and orig (ly:spanner-bound orig LEFT)))
+                (det (and (ly:grob? left) (ly:grob-property left 'details '())))
+                (line (and det (assq-ref det 'chorale-line))))
+           (if line
+               (ly:stencil-add
+                (if (ly:stencil? s) s empty-stencil)
+                (ly:make-stencil
+                 (list 'url-link
+                       (string-append "http://h/?ln=" (number->string line)
+                                      "&t=" (chorale-num (ly:moment-main (grob::when left))))
+                       '(0 . 0.05) '(0 . 0.05))
+                 '(0 . 0.01) '(0 . 0.01)))
+               s))
+         s)))
+
 % Accords en notation française (texte libre, ex. \ch "La♭" 2)
 ch = #(define-music-function (txt dur) (markup? ly:duration?)
   #{ \once \override ChordName.text = #txt c $dur #})
@@ -110,6 +226,10 @@ chorusLayout = \layout {
   }
   \context {
     \Lyrics
+    \consists #Chorale_lyric_engraver
+    \override LyricText.stencil = #chorale-lyric-stencil
+    \override LyricHyphen.stencil = #chorale-hyphen-stencil
+    \override LyricExtender.stencil = #chorale-extender-stencil
     \override LyricText.font-size = #0.6
     \override StanzaNumber.font-series = #'bold
     \override LyricHyphen.minimum-distance = #0.8

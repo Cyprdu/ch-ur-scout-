@@ -1,16 +1,21 @@
-/* Lecteur de partition : lecture synchronisée, voix par voix. */
+/* Lecteur de partition : lecture synchronisée voix par voix (piano)
+   ou sur l'enregistrement du chœur, couplets au choix, paroles surlignées. */
 (async () => {
+  const C = window.Chorale;
+  const { EPS, store, fmt } = C;
   const $ = id => document.getElementById(id);
-  const VOICE_NAMES = { S: 'Soprano', A: 'Alto', T: 'Ténor', B: 'Basse', Solo: 'Solo' };
-  const EPS = 1e-6;
+  const VOICE_NAMES = C.VOICE_NAMES;
   const SHORT = { S: 'Sop.', A: 'Alto', T: 'Tén.', B: 'Bas.', Solo: 'Solo' };
+  const toast = C.toaster($('status'));
+  const status = $('status');
 
   // ---------- Chant demandé ----------
-  const id = new URLSearchParams(location.search).get('c');
+  const qs = new URLSearchParams(location.search);
+  const id = qs.get('c');
   const meta = (window.CHANTS || []).find(s => s.id === id);
   $('backBtn').innerHTML = icon('back') + '<span class="lbl">Chants</span>';
   if (!meta) {
-    $('scoreInner').innerHTML ='<div class="loading">Chant introuvable. <a href="index.html" style="color:var(--red)">Retour à la liste</a></div>';
+    $('scoreInner').innerHTML = '<div class="loading">Chant introuvable. <a href="index.html" style="color:var(--red)">Retour à la liste</a></div>';
     return;
   }
   document.title = `${meta.title} — Chorale Scouts d'Europe Lyon 2026`;
@@ -19,136 +24,61 @@
   $('pdfBtn').href = `chants/${id}/${id}.pdf`;
   $('pdfBtn').innerHTML = icon('download') + '<span class="lbl">Partition PDF</span>';
 
-  await new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = `chants/${id}/data.js`; s.onload = res; s.onerror = rej;
-    document.head.appendChild(s);
-  }).catch(() => null);
+  // Enregistrement du chœur : uniquement si chants/<id>/synchro.json existe (site hébergé)
+  const syncLoad = location.protocol === 'file:' || meta.video === false ? Promise.resolve(null)
+    : fetch(`chants/${id}/synchro.json`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  await C.loadScript(`chants/${id}/data.js`).catch(() => null);
   const data = window.CHANT;
   if (!data) { $('scoreInner').innerHTML = '<div class="loading">Impossible de charger la partition.</div>'; return; }
 
   // ---------- Partition ----------
   const scroller = $('score');
   const score = $('scoreInner');
-  score.innerHTML = '';
-  // Zoom (mémorisé sur cet appareil)
   const ZOOMS = [0.6, 0.75, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5];
-  let zoom;
-  try { zoom = +localStorage.getItem('chorale.zoom'); } catch (e) {}
+  let zoom = store.get('chorale.zoom');
   if (!ZOOMS.includes(zoom)) zoom = innerWidth < 700 ? 1.75 : 1;
   const applyZoom = () => {
     score.style.setProperty('--zoom', zoom);
     $('zVal').textContent = `${Math.round(zoom * 100)} %`;
-    try { localStorage.setItem('chorale.zoom', zoom); } catch (e) {}
+    store.set('chorale.zoom', zoom);
   };
   $('zMinus').innerHTML = icon('minus'); $('zPlus').innerHTML = icon('plus');
   $('zMinus').onclick = () => { zoom = ZOOMS[Math.max(0, ZOOMS.indexOf(zoom) - 1)]; applyZoom(); render(pos, true); };
   $('zPlus').onclick = () => { zoom = ZOOMS[Math.min(ZOOMS.length - 1, ZOOMS.indexOf(zoom) + 1)]; applyZoom(); render(pos, true); };
   applyZoom();
-  const NS = 'http://www.w3.org/2000/svg';
-  const sheets = data.pages.map(svgText => {
-    const div = document.createElement('div');
-    div.className = 'sheet';
-    div.innerHTML = svgText;
-    score.appendChild(div);
-    return div;
-  });
 
-  const notes = [];
-  const cursors = [];
-  sheets.forEach((sheet, pi) => {
-    const svg = sheet.querySelector('svg');
-    const ov = svg.querySelector('.overlay');
-    const under = document.createElementNS(NS, 'g');
-    if (ov.getAttribute('transform')) under.setAttribute('transform', ov.getAttribute('transform'));
-    const cur = document.createElementNS(NS, 'rect');
+  const model = C.mountScore(score, data, meta);
+  const { notes, systems, END } = model;
+  const voices = model.voices;
+  const cursors = model.layers.map(layer => {
+    const cur = document.createElementNS(C.NS, 'rect');
     cur.setAttribute('class', 'cursor'); cur.setAttribute('rx', 0.6); cur.setAttribute('width', 3);
     cur.style.display = 'none';
-    under.appendChild(cur);
-    const defs = svg.querySelector('defs');
-    svg.insertBefore(under, defs ? defs.nextSibling : svg.firstChild);
-    cursors.push(cur);
-    ov.querySelectorAll('.nh').forEach(el => {
-      const b = el.getBBox();
-      notes.push({
-        el, page: pi, v: el.dataset.v, t: +el.dataset.t, p: +el.dataset.p, d: +el.dataset.d,
-        m: +el.dataset.m || 0, tie: el.dataset.tie === '1', x: b.x + b.width / 2, y: b.y + b.height / 2,
-      });
-    });
-  });
-  notes.sort((a, b) => a.t - b.t || a.p - b.p);
-
-  // Liaisons de prolongation : une seule attaque, durée cumulée
-  const key = (v, p, t) => `${v}|${p}|${Math.round(t * 1e4)}`;
-  const byKey = new Map(notes.map(n => [key(n.v, n.p, n.t), n]));
-  notes.forEach(n => { n.root = n.root || n; n.sd = n.d; });
-  notes.forEach(n => {
-    if (!n.tie) return;
-    const nx = byKey.get(key(n.v, n.p, n.t + n.d));
-    if (nx) { nx.root = n.root; nx.silent = true; n.root.sd += nx.d; }
+    layer.appendChild(cur);
+    return cur;
   });
 
-  const END = Math.max(...notes.map(n => n.t + n.d));
-  const voices = (meta.voices || [...new Set(notes.map(n => n.v))]).filter(v => notes.some(n => n.v === v));
-
-  // Ordre de lecture (reprises) : segments du temps écrit
-  const order = (data.order || [[0, END]]).map(([a, b]) => [a, b ?? END]);
-  let acc = 0;
-  const segs = order.map(([a, b]) => { const s = { a, b, off: acc }; acc += b - a; return s; });
-  const TOTAL = acc;
-  const toWritten = P => {
-    for (const s of segs) if (P < s.off + (s.b - s.a) - EPS) return s.a + Math.max(0, P - s.off);
-    const l = segs[segs.length - 1]; return l.b;
-  };
-  const toPerf = w => { for (const s of segs) if (w >= s.a - EPS && w < s.b - EPS) return s.off + (w - s.a); return 0; };
-
-  // Systèmes (lignes) : x qui revient en arrière = nouvelle ligne
-  const systems = [];
-  {
-    const times = [...new Set(notes.map(n => n.t))].sort((a, b) => a - b);
-    let cur = null, prevX = -Infinity, prevPage = -1;
-    for (const t of times) {
-      const at = notes.filter(n => n.t === t);
-      const page = at[0].page;
-      const x = Math.min(...at.map(n => n.x));
-      if (!cur || page !== prevPage || x < prevX - 10) { cur = { notes: [], page, t0: t }; systems.push(cur); }
-      cur.notes.push(...at); prevX = x; prevPage = page;
-    }
-    systems.forEach((s, i) => {
-      s.t1 = i + 1 < systems.length ? systems[i + 1].t0 : END;
-      s.minY = Math.min(...s.notes.map(n => n.y)) - 5;
-      s.maxY = Math.max(...s.notes.map(n => n.y)) + 5;
-      const byT = new Map();
-      s.notes.forEach(n => (byT.get(n.t) || byT.set(n.t, []).get(n.t)).push(n.x));
-      s.pts = [...byT].map(([t, xs]) => [t, Math.min(...xs)]).sort((a, b) => a[0] - b[0]);
-      const lastEnd = Math.max(...s.notes.map(n => n.t + n.d));
-      s.pts.push([Math.max(lastEnd, s.t1), Math.max(...s.notes.map(n => n.x)) + 4]);
-    });
-  }
-  const measures = [...new Set(notes.map(n => n.m))].sort((a, b) => a - b);
-  const lastMeasure = measures[measures.length - 1] || 1;
-  const measureStarts = new Map();
-  notes.forEach(n => { if (!measureStarts.has(n.m) || n.t < measureStarts.get(n.m)) measureStarts.set(n.m, n.t); });
-  const barTimes = [...measureStarts.values()];
+  // ---------- Plan de lecture (couplets) ----------
+  const SKEY = `chorale.structure.${id}`;
+  let cfg = C.structureConfig(meta, store.get(SKEY));
+  let pianoPlan = C.makePlan(C.orderFromConfig(meta, cfg, END), END);
+  let plan = pianoPlan;
 
   // ---------- État ----------
-  const tempo0 = data.tempo || { bpm: 80, unit: 0.25 };
+  const tempo0 = data.tempo || meta.tempo || { bpm: 80, unit: 0.25 };
   let bpm = tempo0.bpm;
   const unit = tempo0.unit;
   const unitLabel = { 0.25: '♩', 0.375: '♩.', 0.5: '𝅗𝅥', 0.125: '♪' }[unit] || '♩';
   const vstate = Object.fromEntries(voices.map(v => [v, true]));
   let solo = null;
   let playing = false, pos = 0, startPos = 0, loop = false, metro = false, raf = 0;
+  let lyricsMode = store.get('chorale.lyrics') ?? 'all';
   const audible = v => solo ? v === solo : vstate[v];
   const secPerWhole = () => 60 / bpm / unit;
+  const measureBars = () => new Set(model.measureList.map(x => Math.round(x.t * 1e4)));
+  const BARS = measureBars();
 
-  // ---------- Audio ----------
-  const status = $('status');
-  let toastTimer;
-  const toast = (msg, ms = 2400) => {
-    status.textContent = msg; status.classList.add('show');
-    clearTimeout(toastTimer); if (ms) toastTimer = setTimeout(() => status.classList.remove('show'), ms);
-  };
+  // ---------- Audio (piano) ----------
   const out = new Tone.Gain(0.85).toDestination();
   const reverb = new Tone.Reverb({ decay: 2.2, wet: 0.2 }).connect(out);
   let pianoReady = false, pianoDone;
@@ -179,22 +109,17 @@
     startPos = from;
     const spw = secPerWhole();
     const inst = instrument();
-    for (const s of segs) {
-      for (const n of notes) {
-        if (n.silent || !audible(n.v) || n.t < s.a - EPS || n.t >= s.b - EPS) continue;
-        const P = s.off + (n.t - s.a);
-        if (P < from - EPS) continue;
-        const f = Tone.Frequency(n.p, 'midi').toFrequency();
-        const dur = Math.max(0.06, Math.min(n.sd, s.b - n.t) * spw - 0.03);
-        const vel = n.v === 'S' || n.v === 'Solo' ? 0.72 : 0.6;
-        T.schedule(time => inst.triggerAttackRelease(f, dur, time, vel), (P - from) * spw);
-      }
+    for (const e of C.perfEvents(model, plan)) {
+      if (!audible(e.n.v) || e.P < from - EPS) continue;
+      const f = Tone.Frequency(e.n.p, 'midi').toFrequency();
+      const dur = Math.max(0.06, e.dP * spw - 0.03);
+      const vel = e.n.v === 'S' || e.n.v === 'Solo' ? 0.72 : 0.6;
+      T.schedule(time => inst.triggerAttackRelease(f, dur, time, vel), (e.P - from) * spw);
     }
     if (metro) {
       const first = Math.ceil((from - EPS) / unit) * unit;
-      for (let P = first; P < TOTAL - EPS; P += unit) {
-        const w = toWritten(P);
-        const accent = barTimes.some(b => Math.abs(b - w) < EPS);
+      for (let P = first; P < plan.TOTAL - EPS; P += unit) {
+        const accent = BARS.has(Math.round(plan.toWritten(P) * 1e4));
         T.schedule(time => click.triggerAttackRelease(accent ? 'C6' : 'G5', 0.03, time, accent ? 0.9 : 0.5), (P - from) * spw);
       }
     }
@@ -205,41 +130,115 @@
     piano.releaseAll(); organ.releaseAll();
   }
 
+  // ---------- Enregistrement du chœur ----------
+  const sync = C.normalizeSync(await syncLoad, meta, END);
+  let syncPlan = null, tmap = null;
+  if (sync) {
+    syncPlan = C.makePlan(sync.order, END);
+    tmap = C.timeMap(sync.marks, syncPlan.TOTAL);
+  }
+  const hasVideo = !!(sync && sync.video && tmap && tmap.anchors.length >= 2);
+  const vOffset = (sync && sync.offset) || 0;
+  let source = 'piano';
+  let video = null;
+  const videoBox = document.createElement('div');
+  videoBox.className = 'video-float'; videoBox.hidden = true;
+  videoBox.innerHTML = '<div id="yt"></div>';
+  document.body.appendChild(videoBox);
+  function loadVideo() {
+    if (!video) {
+      video = C.youtube('yt', sync.video, {
+        onState: st => {
+          if (source !== 'video') return;
+          const p = st === 1 || (st === 3 && playing);
+          if (p === playing) return;
+          playing = p; updatePlayBtn();
+          cancelAnimationFrame(raf);
+          if (p) raf = requestAnimationFrame(tick); else render(pos);
+        },
+        onError: () => toast('Enregistrement indisponible.'),
+      });
+    }
+    return video.whenReady;
+  }
+  const seekVideo = P => { if (video && video.ready) { video.seek(P <= EPS ? 0 : tmap.pToV(P) - vOffset); dblLast = null; } };
+  // Doublure au piano de la voix « solo » par-dessus l'enregistrement
+  let dblEvents = [], dblLast = null;
+  function doubling(P) {
+    if (solo && playing && P != null && dblLast != null && P > dblLast && P - dblLast < 0.5) {
+      const rate = video.rate();
+      const inst = pianoReady ? piano : organ;
+      for (const e of dblEvents) {
+        if (e.P <= dblLast || e.P > P || e.n.v !== solo) continue;
+        const dur = Math.max(0.08, (tmap.pToV(e.P + e.dP) - tmap.pToV(e.P)) / rate - 0.03);
+        inst.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now(), 0.75);
+      }
+    }
+    dblLast = P;
+  }
+
   // ---------- Lecture ----------
   async function play() {
     await Tone.start();
+    if (source === 'video') {
+      await loadVideo();
+      if (!video.ready) return;
+      if (pos >= plan.TOTAL - EPS) { pos = 0; seekVideo(0); }
+      video.play();
+      return;
+    }
     if (instr.value === 'piano' && !pianoReady) {
       toast('Chargement du piano…', 0);
       await Promise.race([pianoLoaded, new Promise(r => setTimeout(r, 8000))]);
       if (pianoReady) status.classList.remove('show'); else toast('Piano indisponible : son d’orgue utilisé.');
     }
-    if (pos >= TOTAL - EPS) pos = 0;
+    if (pos >= plan.TOTAL - EPS) pos = 0;
     playing = true; updatePlayBtn();
     schedule(pos);
     cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
   }
   function pause() {
+    if (source === 'video') {
+      if (video) video.pause();
+      playing = false; updatePlayBtn(); cancelAnimationFrame(raf); render(pos);
+      return;
+    }
     if (!playing) return;
     playing = false; updatePlayBtn();
     cancelAnimationFrame(raf); stopAudio();
     render(pos);
   }
   function seek(P, resume = playing) {
+    pos = Math.max(0, Math.min(P, plan.TOTAL));
+    if (source === 'video') {
+      seekVideo(pos);
+      render(pos, true);
+      if (resume && !playing) play(); else updatePlayBtn();
+      return;
+    }
     if (playing) { playing = false; cancelAnimationFrame(raf); stopAudio(); }
-    pos = Math.max(0, Math.min(P, TOTAL));
     render(pos, true);
     if (resume) play(); else updatePlayBtn();
   }
   function tick() {
     if (!playing) return;
+    if (source === 'video') {
+      const P = tmap.vToP(video.time() + vOffset);
+      doubling(P);
+      pos = P == null ? 0 : P;
+      if (P != null && P >= plan.TOTAL - EPS && loop) { seek(0, true); return; }
+      render(pos);
+      raf = requestAnimationFrame(tick);
+      return;
+    }
     // Position réellement entendue : le Transport est en avance du « lookAhead » de Tone
     // et de la latence de sortie audio ; on se cale sur l'horloge audio.
     const ctx = Tone.context, raw = ctx.rawContext || {};
     const heard = ctx.currentTime - (raw.outputLatency || raw.baseLatency || 0);
     pos = startPos + Math.max(0, T.getSecondsAtTime(heard)) / secPerWhole();
-    if (pos >= TOTAL) {
+    if (pos >= plan.TOTAL) {
       if (loop) { pos = 0; schedule(0); }
-      else { playing = false; stopAudio(); updatePlayBtn(); pos = TOTAL; render(pos); return; }
+      else { playing = false; stopAudio(); updatePlayBtn(); pos = plan.TOTAL; render(pos); return; }
     }
     render(pos);
     raf = requestAnimationFrame(tick);
@@ -247,31 +246,33 @@
 
   // ---------- Affichage ----------
   let lastSys = null, lastOn = new Set();
-  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const lyricFilter = () => (lyricsMode === 'off' ? () => false : lyricsMode === 'all' ? null : v => v === lyricsMode);
+  const verseLabel = v => (meta.structure && meta.structure.names && meta.structure.names[v]) || `couplet ${v}`;
   function render(P, jump = false) {
-    const w = Math.min(toWritten(P), END - EPS);
+    const seg = plan.segAt(Math.min(P, plan.TOTAL - EPS));
+    const w = Math.min(plan.toWritten(P), END - EPS);
     const on = new Set();
+    const active = playing || P > 0;
     if (playing) for (const n of notes) if (audible(n.v) && w >= n.t - EPS && w < n.t + n.d - EPS) on.add(n.el);
+    if (active && P < plan.TOTAL - EPS && lyricsMode !== 'off') for (const s of model.lyricsAt(w, seg.v, lyricFilter())) on.add(s.el);
     lastOn.forEach(el => { if (!on.has(el)) el.classList.remove('on'); });
     on.forEach(el => el.classList.add('on'));
     lastOn = on;
 
-    let s = systems[0];
-    for (const sy of systems) if (sy.t0 <= w + EPS) s = sy;
-    let x = s.pts[0][1];
-    for (let i = 0; i < s.pts.length - 1; i++) {
-      const [t0, x0] = s.pts[i], [t1, x1] = s.pts[i + 1];
-      if (w >= t0 && w <= t1) { x = x0 + (x1 - x0) * (w - t0) / (t1 - t0 || 1); break; }
-      if (w > t1) x = x1;
-    }
-    cursors.forEach((c, i) => { c.style.display = i === s.page && (playing || P > 0) ? '' : 'none'; });
+    const s = model.systemAt(w);
+    const x = model.xAt(s, w);
+    cursors.forEach((c, i) => { c.style.display = i === s.page && active ? '' : 'none'; });
     const c = cursors[s.page];
     c.setAttribute('x', x - 1.5); c.setAttribute('y', s.minY); c.setAttribute('height', s.maxY - s.minY);
 
-    const m = [...measureStarts].filter(([, t]) => t <= w + EPS).reduce((a, [mm, t]) => (t >= a.t ? { m: mm, t } : a), { m: measures[0] || 1, t: -1 }).m;
-    const spw = secPerWhole();
-    $('time').innerHTML = `<b>Mes. ${m}</b> / ${lastMeasure}<br>${fmt(P * spw)} / ${fmt(TOTAL * spw)}`;
-    const frac = TOTAL ? P / TOTAL : 0;
+    const m = model.measureAt(w).m;
+    const lastMeasure = model.measureList[model.measureList.length - 1].m;
+    const clock = source === 'video' && video && video.ready
+      ? `${fmt(playing ? video.time() : (P <= EPS ? 0 : tmap.pToV(P) - vOffset))} / ${fmt(video.duration())}`
+      : `${fmt(P * secPerWhole())} / ${fmt(plan.TOTAL * secPerWhole())}`;
+    const nVerses = C.versesOfOrder(plan.order).length;
+    $('time').innerHTML = `<b>Mes. ${m}</b> / ${lastMeasure}${nVerses > 1 ? ` <span class="verse-tag" style="--c:${C.verseColor(seg.v)}">${verseLabel(seg.v)}</span>` : ''}<br>${clock}`;
+    const frac = plan.TOTAL ? P / plan.TOTAL : 0;
     $('pFill').style.width = `${frac * 100}%`;
     $('pKnob').style.left = `${frac * 100}%`;
 
@@ -291,6 +292,13 @@
       }
     }
   }
+  // Repères des passages sur la barre de progression
+  function drawSegments() {
+    const box = $('pSegs');
+    if (!box) return;
+    box.innerHTML = plan.segs.length > 1 ? plan.segs.map(s =>
+      `<span style="left:${s.off / plan.TOTAL * 100}%;width:${(s.b - s.a) / plan.TOTAL * 100}%;--c:${C.verseColor(s.v)}"></span>`).join('') : '';
+  }
 
   // ---------- Commandes ----------
   const playBtn = $('play');
@@ -305,7 +313,6 @@
   $('loop').onclick = () => { loop = !loop; $('loop').classList.toggle('active', loop); };
   $('metro').innerHTML = icon('metronome');
   $('metro').onclick = () => { metro = !metro; $('metro').classList.toggle('active', metro); if (playing) seek(pos); };
-  instr.onchange = () => { if (playing) seek(pos); };
 
   function updateTempo() {
     $('tVal').innerHTML = `<span>${unitLabel} = ${bpm}</span><small>${bpm === tempo0.bpm ? 'tempo d’origine' : Math.round(bpm / tempo0.bpm * 100) + ' %'}</small>`;
@@ -335,17 +342,28 @@
       el.classList.toggle('muted', !audible(v));
       el.classList.toggle('solo', solo === v);
     });
-    if (playing) seek(pos); else render(pos);
+    if (playing && source !== 'video') seek(pos); else render(pos);
   }
 
-  // Clic sur une note : reprendre à cet endroit
-  notes.forEach(n => n.el.addEventListener('click', () => seek(toPerf(n.t), true)));
+  // Clic sur une note ou une syllabe : reprendre à cet endroit (occurrence la plus proche)
+  notes.forEach(n => n.el.addEventListener('click', () => {
+    const P = plan.toPerf(n.t, pos);
+    if (P != null) seek(P, true);
+  }));
+  model.lyrics.forEach(s => s.el.addEventListener('click', () => {
+    const g = model.groups.find(x => x.v === s.v);
+    const cands = plan.segs.filter(sg => s.t >= sg.a - EPS && s.t < sg.b - EPS && model.chooseLine(g, sg.v, s.t) === s.line)
+      .map(sg => sg.off + (s.t - sg.a));
+    const all = cands.length ? cands : plan.toPerfAll(s.t);
+    if (!all.length) return;
+    seek(all.reduce((x, y) => (Math.abs(y - pos) < Math.abs(x - pos) ? y : x)), true);
+  }));
 
   // Barre de progression
   const prog = $('progress');
   const seekFromEvent = e => {
     const r = prog.getBoundingClientRect();
-    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * TOTAL;
+    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * plan.TOTAL;
   };
   let dragging = false, wasPlaying = false;
   prog.addEventListener('pointerdown', e => {
@@ -360,12 +378,108 @@
     seek(seekFromEvent(e), wasPlaying);
   });
 
+  // ---------- Couplets et paroles (fenêtre) ----------
+  const stBtn = $('structBtn');
+  const stPop = $('structPop');
+  const hasLyrics = model.groups.length > 0;
+  const lyrSel = $('lyricsSel');
+  if (hasLyrics) {
+    lyrSel.innerHTML = `<option value="all">Toutes les voix</option>` +
+      model.groups.map(g => `<option value="${g.v}">${C.esc(g.name)}</option>`).join('') + `<option value="off">Ne pas surligner</option>`;
+    if (![...lyrSel.options].some(o => o.value === lyricsMode)) lyricsMode = 'all';
+    lyrSel.value = lyricsMode;
+    lyrSel.onchange = () => { lyricsMode = lyrSel.value; store.set('chorale.lyrics', lyricsMode); render(pos); };
+  } else $('lyricsRow').hidden = true;
+  const editor = C.structureEditor($('structEditor'), {
+    model, meta, cfg,
+    duration: order => order.reduce((s, [a, b]) => s + (b - a), 0) * secPerWhole(),
+    onChange: (c, order) => {
+      cfg = c; store.set(SKEY, c);
+      const wasP = playing, frac = plan.TOTAL ? pos / plan.TOTAL : 0;
+      if (playing) pause();
+      pianoPlan = C.makePlan(order, END);
+      if (source !== 'video') plan = pianoPlan;
+      drawSegments(); updateStructBtn();
+      seek(Math.min(frac * plan.TOTAL, plan.TOTAL), wasP && source !== 'video');
+    },
+  });
+  function updateStructBtn() {
+    const vs = C.versesOfOrder(plan.order);
+    const N = (meta.structure && meta.structure.verses) || 1;
+    let lbl;
+    if (source === 'video') lbl = 'Enregistrement';
+    else if (cfg.custom) lbl = 'Personnalisé';
+    else if (N <= 1) lbl = 'Structure';
+    else if (meta.structure.names) lbl = vs.length === N ? 'Avec reprise' : 'Sans reprise';
+    else lbl = vs.length === 1 ? `Couplet ${vs[0]}` : vs.length === N ? `${N} couplets` : `${vs.length} couplets`;
+    stBtn.innerHTML = icon('list') + `<span>${lbl}</span>`;
+  }
+  stBtn.onclick = e => { e.stopPropagation(); stPop.hidden = !stPop.hidden; stBtn.classList.toggle('active', !stPop.hidden); };
+  $('structClose').onclick = () => { stPop.hidden = true; stBtn.classList.remove('active'); };
+  document.addEventListener('pointerdown', e => {
+    if (!stPop.hidden && !stPop.contains(e.target) && !stBtn.contains(e.target)) { stPop.hidden = true; stBtn.classList.remove('active'); }
+  });
+
+  // ---------- Choix du son : piano / orgue / chœur ----------
+  const videoBtn = $('videoBtn');
+  async function setSource(src) {
+    const wasPlaying = playing;
+    const frac = plan.TOTAL ? pos / plan.TOTAL : 0;
+    pause();
+    source = src;
+    document.body.classList.toggle('video-mode', src === 'video');
+    videoBox.hidden = src !== 'video';
+    const on = src === 'video';
+    $('choirCard').classList.toggle('on', on);
+    videoBtn.innerHTML = icon(on ? 'note' : 'headphones') + `<span>${on ? 'Revenir au piano' : 'Écouter le chœur'}</span>`;
+    videoBtn.classList.toggle('primary', !on);
+    $('ccTitle').textContent = on ? 'Vous écoutez l’enregistrement du chœur' : 'Écoutez le chœur, la partition suit';
+    $('ccSub').textContent = on
+      ? 'Notes et paroles suivent le chant. Le casque d’une voix (en bas) la double au piano pour mieux l’entendre.'
+      : 'Un enregistrement du chant est synchronisé : les notes et les paroles s’allument en rouge au moment où elles sont chantées.';
+    document.querySelectorAll('.v-solo').forEach(b => {
+      b.title = src === 'video' ? 'Doubler cette voix au piano' : 'Écouter cette voix seule';
+    });
+    plan = src === 'video' ? syncPlan : pianoPlan;
+    if (src === 'video') dblEvents = C.perfEvents(model, plan);
+    editor.setReadOnly(src === 'video', src === 'video' ? 'L’enregistrement impose son plan : voici les passages qu’il chante.' : '');
+    if (src === 'video') editor.set({ verses: C.versesOfOrder(syncPlan.order), custom: syncPlan.order.map(x => x.slice()) });
+    else editor.set(cfg);
+    drawSegments(); updateStructBtn();
+    if (src === 'video') { toast('Chargement de l’enregistrement…', 0); await loadVideo(); status.classList.remove('show'); }
+    seek(Math.min(frac * plan.TOTAL, plan.TOTAL), wasPlaying);
+  }
+  if (hasVideo) {
+    const o = document.createElement('option');
+    o.value = 'video'; o.textContent = 'Chœur';
+    instr.prepend(o);
+    instr.value = 'piano';
+    $('choirCard').hidden = false;
+    $('ccIcon').innerHTML = icon('headphones');
+    videoBtn.innerHTML = icon('headphones') + '<span>Écouter le chœur</span>';
+    videoBtn.onclick = () => {
+      Tone.start();
+      instr.value = source === 'video' ? 'piano' : 'video';
+      setSource(instr.value === 'video' ? 'video' : 'piano').then(() => { if (source === 'video' && !playing) play(); });
+    };
+  }
+  instr.onchange = () => {
+    Tone.start();
+    const src = instr.value === 'video' ? 'video' : 'piano';
+    if (src !== source) setSource(src);
+    else if (playing) seek(pos);
+  };
+
   addEventListener('keydown', e => {
     if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
     if (e.code === 'Space') { e.preventDefault(); playing ? pause() : play(); }
     else if (e.code === 'Home') { e.preventDefault(); seek(0); }
+    else if (e.code === 'Escape' && !stPop.hidden) { stPop.hidden = true; stBtn.classList.remove('active'); }
   });
 
   $('dock').hidden = false;
-  updatePlayBtn(); updateTempo(); render(0);
+  const dockH = () => document.body.style.setProperty('--dock-h', `${$('dock').offsetHeight}px`);
+  addEventListener('resize', dockH); dockH();
+  updatePlayBtn(); updateTempo(); updateStructBtn(); drawSegments(); render(0);
+  if (hasVideo && qs.get('mode') === 'video') { instr.value = 'video'; setSource('video'); }
 })();
