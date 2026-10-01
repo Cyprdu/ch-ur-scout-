@@ -1,1 +1,86 @@
-test
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chants — Chorale Scouts d'Europe Lyon 2026</title>
+<meta name="description" content="Partitions et lecteur voix par voix de la chorale des Scouts d'Europe, Lyon 2026.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="">
+      <span class="brand-text"><strong>Chorale Scouts d'Europe</strong><span>Lyon 2026</span></span>
+    </a>
+  </div>
+</header>
+
+<section class="hero">
+  <img src="assets/logo.png" alt="Logo des Scouts d'Europe">
+  <div>
+    <div class="eyebrow">Répertoire · Lyon 2026</div>
+    <h1>Les chants de la chorale</h1>
+    <p>Choisissez un chant pour l'écouter pendant que la partition défile. Vous pouvez le jouer voix par voix ou toutes ensemble, et régler le tempo.</p>
+  </div>
+</section>
+
+<div class="toolbar">
+  <label class="search" id="searchBox">
+    <span id="searchIcon"></span>
+    <input id="q" type="search" placeholder="Rechercher un chant…" autocomplete="off">
+  </label>
+  <span class="count" id="count"></span>
+</div>
+
+<main class="list" id="list"></main>
+
+<footer class="footer">
+  Partitions regravées pour la chorale à des fins de répétition. Les droits des œuvres restent à leurs auteurs et éditeurs.<br>Sons de piano : Salamander Grand Piano (Alexander Holm, CC BY 3.0).
+</footer>
+
+<script src="assets/icons.js"></script>
+<script src="chants.js"></script>
+<script>
+(() => {
+  const list = document.getElementById('list');
+  const q = document.getElementById('q');
+  const count = document.getElementById('count');
+  document.getElementById('searchIcon').innerHTML = icon('search');
+  const NAMES = { S: 'Soprano', A: 'Alto', T: 'Ténor', B: 'Basse', Solo: 'Solo' };
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const songs = [...window.CHANTS].sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+
+  function render() {
+    const term = norm(q.value.trim());
+    const shown = songs.filter(s => !term || norm(`${s.title} ${s.category} ${s.authors}`).includes(term));
+    count.textContent = `${shown.length} chant${shown.length > 1 ? 's' : ''}`;
+    list.innerHTML = shown.length ? shown.map((s, i) => `
+      <article class="song">
+        <div class="num">${String(songs.indexOf(s) + 1).padStart(2, '0')}</div>
+        <div>
+          <h2><a class="stretch" href="chant.html?c=${encodeURIComponent(s.id)}">${esc(s.title)}</a></h2>
+          <div class="meta">
+            ${s.category ? `<span class="cat">${esc(s.category)}</span>` : ''}
+            <span>${esc(s.authors || '')}</span>
+            <span class="badges">${s.voices.map(v => `<span class="badge" title="${NAMES[v] || v}">${v === 'Solo' ? 'Solo' : v}</span>`).join('')}</span>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn ghost" href="chants/${encodeURIComponent(s.id)}/${encodeURIComponent(s.id)}.pdf" download title="Télécharger la partition (PDF)">${icon('download')}<span>PDF</span></a>
+          <a class="btn primary" href="chant.html?c=${encodeURIComponent(s.id)}">${icon('play', 'fill')}<span>Écouter</span></a>
+        </div>
+      </article>`).join('') : '<p class="empty">Aucun chant ne correspond à votre recherche.</p>';
+  }
+  q.addEventListener('input', render);
+  render();
+})();
+</script>
+</body>
+</html>

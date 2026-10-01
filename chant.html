@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chant — Chorale Scouts d'Europe Lyon 2026</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="btn ghost" href="index.html" id="backBtn" title="Tous les chants"></a>
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="">
+      <span class="brand-text"><strong>Chorale Scouts d'Europe</strong><span>Lyon 2026</span></span>
+    </a>
+    <span class="spacer"></span>
+    <a class="btn" id="pdfBtn" download></a>
+  </div>
+</header>
+
+<section class="song-head">
+  <div class="eyebrow" id="cat"></div>
+  <div class="song-head-row">
+    <div>
+      <h1 id="title"></h1>
+      <p id="authors"></p>
+    </div>
+    <div class="zoom" title="Taille de la partition">
+      <button id="zMinus" aria-label="Réduire la partition"></button>
+      <span id="zVal">100 %</span>
+      <button id="zPlus" aria-label="Agrandir la partition"></button>
+    </div>
+  </div>
+</section>
+
+<main class="score" id="score"><div class="score-inner" id="scoreInner"><div class="loading">Chargement de la partition…</div></div></main>
+
+<div class="dock" id="dock" hidden>
+  <div class="progress" id="progress" title="Se déplacer dans le chant">
+    <div class="track"></div><div class="fill" id="pFill"></div><div class="knob" id="pKnob"></div>
+  </div>
+  <div class="dock-inner">
+    <div class="transport">
+      <button class="icon-btn" id="restart" title="Revenir au début (Début)"></button>
+      <button class="play" id="play" title="Lecture / pause (Espace)"></button>
+      <button class="icon-btn" id="loop" title="Lire en boucle"></button>
+      <div class="time" id="time"></div>
+    </div>
+    <div class="voices" id="voices"></div>
+    <div class="settings">
+      <div class="tempo" title="Tempo">
+        <button id="tMinus" aria-label="Ralentir"></button>
+        <div class="val" id="tVal" title="Cliquer pour revenir au tempo d'origine"></div>
+        <button id="tPlus" aria-label="Accélérer"></button>
+      </div>
+      <button class="icon-btn" id="metro" title="Métronome"></button>
+      <select class="select" id="instr" title="Son">
+        <option value="piano">Piano</option>
+        <option value="organ">Orgue</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="status" id="status"></div>
+
+<script src="assets/icons.js"></script>
+<script src="chants.js"></script>
+<script src="assets/tone.js"></script>
+<script src="assets/player.js"></script>
+</body>
+</html>
