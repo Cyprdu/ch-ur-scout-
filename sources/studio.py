@@ -100,6 +100,50 @@ def analyse(vid):
     return data
 
 
+AUDIO_NAME = 'enregistrement.mp3'
+
+
+def ensure_mp3(chant, vid, force=False):
+    """Copie MP3 de l'enregistrement dans site/chants/<chant>/ : le site ne dépend plus de YouTube."""
+    out = os.path.join(SITE, 'chants', chant, AUDIO_NAME)
+    if os.path.exists(out) and not force:
+        return out
+    ffmpeg = tool('ffmpeg')
+    if not ffmpeg:
+        raise RuntimeError("ffmpeg n'est pas installé")
+    src = audio_file(vid)
+    tmp = out + '.tmp.mp3'
+    r = subprocess.run([ffmpeg, '-v', 'error', '-y', '-i', src, '-vn', '-map_metadata', '-1',
+                        '-ac', '2', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '128k', tmp],
+                       capture_output=True, text=True, encoding='utf-8', errors='replace')
+    if r.returncode != 0 or not os.path.exists(tmp):
+        raise RuntimeError('conversion MP3 impossible : ' + r.stderr.strip()[-200:])
+    os.replace(tmp, out)
+    return out
+
+
+def attach_mp3(chant, data):
+    """Télécharge le MP3 et l'indique dans la synchro (champ « audio »)."""
+    ensure_mp3(chant, data['video'], force=data.get('audioVideo') not in (None, data['video']))
+    data['audio'] = AUDIO_NAME
+    data['audioVideo'] = data['video']
+    return data
+
+
+def mp3_all():
+    """Ajoute le MP3 à toutes les synchros publiées."""
+    for chant in sorted(os.listdir(os.path.join(SITE, 'chants'))):
+        path = os.path.join(SITE, 'chants', chant, 'synchro.json')
+        if not os.path.exists(path):
+            continue
+        data = json.load(open(path, encoding='utf-8'))
+        attach_mp3(chant, data)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=1)
+        size = os.path.getsize(os.path.join(SITE, 'chants', chant, AUDIO_NAME)) / 1e6
+        print(f'  {chant} : {AUDIO_NAME} ({size:.1f} Mo)')
+
+
 # ---------------------------------------------------------------- serveur
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
@@ -111,6 +155,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
+        self.send_header('Accept-Ranges', 'bytes')
         super().end_headers()
 
     def send_json(self, obj, code=200):
@@ -134,7 +179,45 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.send_json(analyse(vid))
             except Exception as e:  # noqa: BLE001
                 return self.send_json({'error': str(e)})
+        if self.headers.get('Range') and self.serve_range():
+            return
         return super().do_GET()
+
+    def serve_range(self):
+        """Requêtes « Range » (indispensables pour se déplacer dans un MP3)."""
+        path = self.translate_path(self.path.split('?', 1)[0])
+        m = re.match(r'bytes=(\d*)-(\d*)$', self.headers.get('Range', '').strip())
+        if not m or not os.path.isfile(path):
+            return False
+        size = os.path.getsize(path)
+        a, b = m.group(1), m.group(2)
+        start = int(a) if a else max(0, size - int(b or 0))
+        end = int(b) if a and b else size - 1
+        end = min(end, size - 1)
+        if start > end:
+            self.send_response(416)
+            self.send_header('Content-Range', f'bytes */{size}')
+            self.end_headers()
+            return True
+        self.send_response(206)
+        self.send_header('Content-Type', self.guess_type(path))
+        self.send_header('Accept-Ranges', 'bytes')
+        self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
+        self.send_header('Content-Length', str(end - start + 1))
+        self.end_headers()
+        with open(path, 'rb') as f:
+            f.seek(start)
+            left = end - start + 1
+            while left > 0:
+                chunk = f.read(min(65536, left))
+                if not chunk:
+                    break
+                try:
+                    self.wfile.write(chunk)
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                    break
+                left -= len(chunk)
+        return True
 
     def read_json(self):
         n = int(self.headers.get('Content-Length') or 0)
@@ -163,11 +246,20 @@ class Handler(SimpleHTTPRequestHandler):
             if not isinstance(data, dict) or not isinstance(data.get('marks'), list) or not ID_RE.match(data.get('video', '')):
                 raise ValueError('données de synchro invalides')
             path = os.path.join(self.chant_dir(chant), 'synchro.json')
+            # Copie MP3 de l'enregistrement (le site ne lit pas YouTube)
+            prev = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
+            data['audioVideo'] = prev.get('audioVideo')
+            warning = None
+            try:
+                attach_mp3(chant, data)
+            except Exception as e:  # noqa: BLE001 — sans MP3, le site lira YouTube
+                data.pop('audio', None); data.pop('audioVideo', None)
+                warning = f'MP3 non téléchargé ({e}) : le site lira la vidéo YouTube.'
             self.archive(chant, path)
             with open(path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=1)
             catalogue()
-            return self.send_json({'ok': True, 'path': os.path.relpath(path, ROOT)})
+            return self.send_json({'ok': True, 'path': os.path.relpath(path, ROOT), 'warning': warning})
         except Exception as e:  # noqa: BLE001
             return self.send_json({'error': str(e)}, 400)
 
@@ -180,6 +272,9 @@ class Handler(SimpleHTTPRequestHandler):
             self.archive(m.group(1), path)
             if os.path.exists(path):
                 os.remove(path)
+            mp3 = os.path.join(self.chant_dir(m.group(1)), AUDIO_NAME)
+            if os.path.exists(mp3):
+                os.remove(mp3)
             catalogue()
             return self.send_json({'ok': True})
         except Exception as e:  # noqa: BLE001
@@ -187,6 +282,10 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
+    if '--mp3' in sys.argv:
+        print('Téléchargement des enregistrements en MP3 :')
+        mp3_all()
+        return
     port = next((int(a) for a in sys.argv[1:] if a.isdigit()), 8000)
     srv = ThreadingHTTPServer(('127.0.0.1', port), Handler)
     url = f'http://localhost:{port}/synchro.html'

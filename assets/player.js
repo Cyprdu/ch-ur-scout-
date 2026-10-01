@@ -1,5 +1,5 @@
 /* Lecteur de partition : lecture synchronisée voix par voix (piano)
-   ou sur l'enregistrement du chœur, couplets au choix, paroles surlignées. */
+   ou sur l'enregistrement original, couplets au choix, paroles surlignées. */
 (async () => {
   const C = window.Chorale;
   const { EPS, store, fmt } = C;
@@ -24,7 +24,7 @@
   $('pdfBtn').href = `chants/${id}/${id}.pdf`;
   $('pdfBtn').innerHTML = icon('download') + '<span class="lbl">Partition PDF</span>';
 
-  // Enregistrement du chœur : uniquement si chants/<id>/synchro.json existe (site hébergé)
+  // Enregistrement original : uniquement si chants/<id>/synchro.json existe (site hébergé)
   const syncLoad = location.protocol === 'file:' || meta.video === false ? Promise.resolve(null)
     : fetch(`chants/${id}/synchro.json`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
   await C.loadScript(`chants/${id}/data.js`).catch(() => null);
@@ -130,14 +130,14 @@
     piano.releaseAll(); organ.releaseAll();
   }
 
-  // ---------- Enregistrement du chœur ----------
+  // ---------- Enregistrement original ----------
   const sync = C.normalizeSync(await syncLoad, meta, END);
   let syncPlan = null, tmap = null;
   if (sync) {
     syncPlan = C.makePlan(sync.order, END);
     tmap = C.timeMap(sync.marks, syncPlan.TOTAL);
   }
-  const hasVideo = !!(sync && sync.video && tmap && tmap.anchors.length >= 2);
+  const hasVideo = !!(sync && (sync.audio || sync.video) && tmap && tmap.anchors.length >= 2);
   const vOffset = (sync && sync.offset) || 0;
   let source = 'piano';
   let video = null;
@@ -147,7 +147,11 @@
   document.body.appendChild(videoBox);
   function loadVideo() {
     if (!video) {
-      video = C.youtube('yt', sync.video, {
+      // Copie MP3 de l'enregistrement si elle existe (le site ne dépend alors pas de YouTube)
+      const make = sync.audio
+        ? (opts) => C.audioFile(`chants/${id}/${sync.audio}`, opts)
+        : (opts) => C.youtube('yt', sync.video, opts);
+      video = make({
         onState: st => {
           if (source !== 'video') return;
           const p = st === 1 || (st === 3 && playing);
@@ -433,7 +437,7 @@
     $('choirCard').classList.toggle('on', on);
     videoBtn.innerHTML = icon(on ? 'note' : 'headphones') + `<span>${on ? 'Revenir au piano' : 'Écouter le chœur'}</span>`;
     videoBtn.classList.toggle('primary', !on);
-    $('ccTitle').textContent = on ? 'Vous écoutez l’enregistrement du chœur' : 'Écoutez le chœur, la partition suit';
+    $('ccTitle').textContent = on ? 'Vous écoutez l’enregistrement original' : 'Écoutez le chœur, la partition suit';
     $('ccSub').textContent = on
       ? 'Notes et paroles suivent le chant. Le casque d’une voix (en bas) la double au piano pour mieux l’entendre.'
       : 'Un enregistrement du chant est synchronisé : les notes et les paroles s’allument en rouge au moment où elles sont chantées.';

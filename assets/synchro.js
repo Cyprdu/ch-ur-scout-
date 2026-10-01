@@ -1197,11 +1197,14 @@
       toast('Fichier téléchargé. Pour publier directement, fermez ce serveur et lancez site/serveur-local.bat (sinon : renommez le fichier synchro.json et placez-le dans site/chants/' + chantId + '/).', 9000);
       return;
     }
+    toast('Publication en cours… (copie de l’enregistrement en MP3, quelques secondes)', 0);
+    $('publishBtn').disabled = true;
     const r = await fetch('api/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chant: chantId, data: obj }) })
       .then(x => x.json()).catch(() => ({ error: 'serveur injoignable' }));
+    $('publishBtn').disabled = false;
     if (r.ok) {
       published = obj; publishedSig = pubSig(); refreshSaveState();
-      toast('Publié ! Le chant propose maintenant « Écouter le chœur ».', 4000);
+      toast(r.warning ? 'Publié. ' + r.warning : 'Publié avec sa copie MP3 ! Le chant propose maintenant « Écouter le chœur ».', r.warning ? 7000 : 4000);
     } else toast('Échec de la publication : ' + r.error, 6000);
   };
 

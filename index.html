@@ -27,7 +27,6 @@
     <div class="eyebrow">Répertoire · Lyon 2026</div>
     <h1>Les chants de la chorale</h1>
     <p>Choisissez un chant pour l'écouter pendant que la partition défile. Vous pouvez le jouer voix par voix ou toutes ensemble, et régler le tempo.</p>
-    <p class="hero-choir" id="heroChoir" hidden><span id="heroChoirIcon"></span><span><b>Nouveau :</b> certains chants s'écoutent avec l'enregistrement du chœur, et la partition et les paroles suivent le chant.</span></p>
   </div>
 </section>
 
@@ -70,20 +69,15 @@
           <div class="meta">
             <span>${esc(s.authors || '')}</span>
             <span class="badges">${s.voices.map(v => `<span class="badge" title="${NAMES[v] || v}">${v === 'Solo' ? 'Solo' : v}</span>`).join('')}</span>
-            ${s.video ? `<span class="choir-tag">${icon('headphones')}Chœur synchronisé</span>` : ''}
+            ${s.video ? `<span class="choir-tag">${icon('headphones')}Enregistrement original</span>` : ''}
           </div>
         </div>
         <div class="actions">
           <a class="btn ghost" href="chants/${encodeURIComponent(s.id)}/${encodeURIComponent(s.id)}.pdf" download title="Télécharger la partition (PDF)">${icon('download')}<span>PDF</span></a>
-          ${s.video ? `<a class="btn choir" href="chant.html?c=${encodeURIComponent(s.id)}&mode=video" title="Écouter l’enregistrement du chœur, la partition suit">${icon('headphones')}<span class="l-long">Écouter le chœur</span><span class="l-short">Chœur</span></a>` : ''}
+          ${s.video ? `<a class="btn choir" href="chant.html?c=${encodeURIComponent(s.id)}&mode=video" title="Écouter l’enregistrement original, la partition suit">${icon('headphones')}<span class="l-long">Écouter le chœur</span><span class="l-short">Chœur</span></a>` : ''}
           <a class="btn primary" href="chant.html?c=${encodeURIComponent(s.id)}">${icon('play', 'fill')}<span>Écouter</span></a>
         </div>
       </article>`).join('') : '<p class="empty">Aucun chant ne correspond à votre recherche.</p>';
-  }
-  if (songs.some(s => s.video)) {
-    document.getElementById('heroChoir').hidden = false;
-    if (songs.every(s => s.video)) document.querySelector('#heroChoir span:last-child').innerHTML = '<b>Nouveau :</b> chaque chant s’écoute aussi avec l’enregistrement du chœur, et la partition et les paroles suivent le chant.';
-    document.getElementById('heroChoirIcon').innerHTML = icon('headphones');
   }
   q.addEventListener('input', render);
   render();

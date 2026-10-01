@@ -474,6 +474,31 @@ window.Chorale = (() => {
     return p;
   }
 
+  /** Lecteur d'un fichier audio (copie MP3 de l'enregistrement), même interface que youtube(). */
+  function audioFile(url, { onState, onError } = {}) {
+    const a = new Audio();
+    a.preload = 'auto';
+    const p = { ready: false, state: -1, audio: a };
+    const set = st => { p.state = st; if (onState) onState(st); };
+    p.whenReady = new Promise(res => {
+      a.addEventListener('loadedmetadata', () => { p.ready = true; res(p); }, { once: true });
+      a.addEventListener('error', () => { if (onError) onError(a.error && a.error.code); res(p); }, { once: true });
+    });
+    a.addEventListener('playing', () => set(1));
+    a.addEventListener('pause', () => set(a.ended ? 0 : 2));
+    a.addEventListener('waiting', () => set(3));
+    a.src = url;
+    p.playing = () => p.state === 1;
+    p.time = () => a.currentTime || 0;
+    p.duration = () => (isFinite(a.duration) ? a.duration : 0);
+    p.play = () => a.play().catch(() => {});
+    p.pause = () => a.pause();
+    p.seek = t => { if (p.ready) a.currentTime = Math.max(0, Math.min(t, p.duration() || t)); };
+    p.rate = r => { if (r) a.playbackRate = r; return a.playbackRate || 1; };
+    p.volume = v => { if (v != null) a.volume = v / 100; return a.volume * 100; };
+    return p;
+  }
+
   // ======================================================================
   // Éditeur de structure (couplets + passages)
   // ======================================================================
@@ -674,7 +699,7 @@ window.Chorale = (() => {
   return {
     EPS, NS, VOICE_NAMES, verseColor, esc, fmt, fmtBeats,
     generateOrder, mergeOrder, defaultOrder, versesOfOrder, allVerses, makePlan,
-    mountScore, measureSteps, lyricUnits, timeMap, youtube, loadYouTubeApi,
+    mountScore, measureSteps, lyricUnits, timeMap, youtube, audioFile, loadYouTubeApi,
     structureEditor, structureConfig, orderFromConfig, loadScript, store, toaster, perfEvents, normalizeSync,
   };
 })();
