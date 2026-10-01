@@ -14,7 +14,6 @@
     return;
   }
   document.title = `${meta.title} — Chorale Scouts d'Europe Lyon 2026`;
-  $('cat').textContent = meta.category || '';
   $('title').textContent = meta.title;
   $('authors').textContent = meta.authors || '';
   $('pdfBtn').href = `chants/${id}/${id}.pdf`;

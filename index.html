@@ -67,7 +67,6 @@
         <div>
           <h2><a class="stretch" href="chant.html?c=${encodeURIComponent(s.id)}">${esc(s.title)}</a></h2>
           <div class="meta">
-            ${s.category ? `<span class="cat">${esc(s.category)}</span>` : ''}
             <span>${esc(s.authors || '')}</span>
             <span class="badges">${s.voices.map(v => `<span class="badge" title="${NAMES[v] || v}">${v === 'Solo' ? 'Solo' : v}</span>`).join('')}</span>
           </div>
