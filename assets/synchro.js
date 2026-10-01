@@ -162,6 +162,9 @@
   const PKEY = `chorale.studio.${chantId}.${videoId}`;
   let project = { cfg: C.structureConfig(meta, null), marks: {}, offset: 0 };
   let plan, mSteps, endStep, keyIndex, unitCache, tmap, markerList = [];
+  let allPoints = [], vmaps = {}, dblEv = {};
+  // Correspondance propre à un pupitre (ses repères de notes d'abord)
+  const vmap = v => vmaps[v] || (vmaps[v] = C.voiceTimeMap(allPoints, v, plan.TOTAL));
   let tlDirty = true;
 
   function rebuild() {
@@ -174,6 +177,11 @@
     mSteps.forEach(s => keyIndex.set(s.key, s));
     keyIndex.set('end', endStep);
     groups.forEach(g => units(g.v, 'syl').forEach(u => keyIndex.set(u.key, u)));
+    model.voices.forEach(v => notesOf(v).forEach(u => keyIndex.set(u.key, u)));
+  }
+  function notesOf(voice) {
+    const k = `notes|${voice}`;
+    return unitCache[k] || (unitCache[k] = C.noteUnits(model, plan, voice));
   }
   function units(voice, unit) {
     const k = `${voice}|${unit}`;
@@ -189,6 +197,7 @@
     };
     mSteps.forEach(add);
     groups.forEach(g => units(g.v, 'syl').forEach(add));
+    model.voices.forEach(v => notesOf(v).forEach(add));
     out.set('end', 'end');
     return out;
   }
@@ -196,9 +205,10 @@
     const pts = [];
     for (const [key, m] of Object.entries(project.marks)) {
       const st = keyIndex.get(key);
-      if (st) pts.push({ P: st.P, t: m.t, key, kind: st.kind });
+      if (st) pts.push({ P: st.P, t: m.t, key, kind: st.kind, voice: st.voice });
     }
     tmap = C.timeMap(pts, plan.TOTAL);
+    allPoints = pts; vmaps = {}; dblEv = {};
     markerList = pts.map(p => {
       const st = keyIndex.get(p.key);
       return {
@@ -233,7 +243,8 @@
       if (!key) {
         if (m.kind === 'end' || (Math.abs(m.P - plan.TOTAL) < EPS && m.kind !== 'l')) key = 'end';
         else {
-          const pool = m.kind === 'l' ? groups.filter(g => !m.voice || g.v === m.voice).flatMap(g => units(g.v, 'syl')) : mSteps;
+          const pool = m.kind === 'l' ? groups.filter(g => !m.voice || g.v === m.voice).flatMap(g => units(g.v, 'syl'))
+            : m.kind === 'n' ? model.voices.filter(v => !m.voice || v === m.voice).flatMap(v => notesOf(v)) : mSteps;
           const hit = pool.find(s => Math.abs(s.P - m.P) < 1e-6);
           key = hit && hit.key;
         }
@@ -249,7 +260,7 @@
       if (!st) return null;
       const o = { key, k: st.kind, P: Math.round(st.P * 1e6) / 1e6, t: m.t };
       if (st.kind === 'm') o.m = st.m;
-      if (st.kind === 'l') { o.v = st.voice; o.tx = st.tx; }
+      if (st.kind === 'l' || st.kind === 'n') { o.v = st.voice; o.tx = st.tx; }
       return o;
     }).filter(Boolean).sort((a, b) => a.P - b.P || a.t - b.t);
     return {
@@ -416,7 +427,12 @@
     const b = $('tapKind').querySelector('[data-k="l"]');
     b.disabled = true; b.title = 'Pas de paroles sur cette partition';
   }
+  if (!model.voices.includes(settings.tapNoteVoice)) settings.tapNoteVoice = model.voices.includes('S') ? 'S' : model.voices[0];
+  $('tapNoteVoice').innerHTML = model.voices.map(v => `<option value="${v}">${esc(C.VOICE_NAMES[v] || v)}</option>`).join('');
+  $('tapNoteVoice').value = settings.tapNoteVoice;
+  $('tapNoteVoice').onchange = e => { settings.tapNoteVoice = e.target.value; setTapMode(); e.target.blur(); };
   const tapList = () => {
+    if (settings.tapKind === 'n') return [...notesOf(settings.tapNoteVoice), endStep];
     if (settings.tapKind === 'l' && hasLyrics) return [...units(settings.tapVoice, settings.tapUnit), endStep];
     return [...mSteps, endStep];
   };
@@ -442,6 +458,7 @@
     $('tapKind').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.k === settings.tapKind));
     $('tapUnit').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.u === settings.tapUnit));
     $('lyrOpts').hidden = settings.tapKind !== 'l';
+    $('noteOpts').hidden = settings.tapKind !== 'n';
     const list = tapList();
     if (refP != null) { const j = list.findIndex(s => s.P >= refP - EPS); curKey = j >= 0 ? list[j].key : null; }
     lastTapped = null;
@@ -536,6 +553,24 @@
     out.sort((a, b) => a.t - b.t);
     return out.map((s, k) => esc(s.tx) + (k < out.length - 1 ? (s.hy ? '-' : ' ') : '')).join('');
   }
+  // Suite des notes autour de la prochaine, avec la syllabe chantée dessus
+  function noteLineHTML(list, i) {
+    const g = groups.find(x => x.v === settings.tapNoteVoice);
+    const sylAt = u => {
+      if (!g) return '';
+      const ln = model.chooseLine(g, u.seg.v, u.w);
+      const s = ln && ln.syl.find(x => Math.abs(x.t - u.w) < EPS);
+      return s ? ` <i>${esc(s.tx)}</i>` : '';
+    };
+    const a = Math.max(0, i - 3), b = Math.min(list.length, i + 6);
+    const out = [];
+    for (let k = a; k < b; k++) {
+      const u = list[k];
+      if (u.kind !== 'n') continue;
+      out.push(`<span class="${k < i ? 'done' : k === i ? 'now' : ''}">${esc(u.tx)}${sylAt(u)}</span>`);
+    }
+    return out.join(' · ');
+  }
   function refreshCue() {
     const list = tapList();
     const i = curIndex(list);
@@ -550,12 +585,12 @@
       return;
     }
     const segN = plan.segs.indexOf(st.seg) + 1;
-    $('cueBig').textContent = st.kind === 'l' ? st.tx : st.kind === 'end' ? 'Fin du chant' : `Mesure ${st.m}`;
-    const m = st.kind === 'l' ? model.measureAt(st.w).m : null;
+    $('cueBig').textContent = st.kind === 'l' || st.kind === 'n' ? st.tx : st.kind === 'end' ? 'Fin du chant' : `Mesure ${st.m}`;
+    const m = st.kind === 'l' || st.kind === 'n' ? model.measureAt(st.w).m : null;
     $('cueSub').innerHTML = (C.versesOfOrder(plan.order).length > 1 ? vtag(st.seg.v) + ' ' : '') +
       `passage ${segN}/${plan.segs.length}` + (m != null ? ` · mes. ${m}` : '') +
       (project.marks[st.key] ? ` · <b>déjà posé à ${fmtH(project.marks[st.key].t)}</b>` : '');
-    $('cueLine').innerHTML = st.kind === 'l' ? lyricLineHTML(list, i) : st.kind === 'm' ? measureWords(st) : 'Tapez quand la dernière note s’arrête.';
+    $('cueLine').innerHTML = st.kind === 'l' ? lyricLineHTML(list, i) : st.kind === 'n' ? noteLineHTML(list, i) : st.kind === 'm' ? measureWords(st) : 'Tapez quand la dernière note s’arrête.';
   }
 
   // Clic sur la partition
@@ -564,12 +599,18 @@
     list.forEach((s, k) => { if (pred(s) && (best < 0 || Math.abs(k - refIdx) < Math.abs(best - refIdx))) best = k; });
     return best;
   }
-  function onScoreClick(t, syl) {
+  function onScoreClick(t, syl, note) {
     if (tab === 'tap') {
       const list = tapList();
       const ref = curIndex(list);
       let i = -1;
       if (syl && settings.tapKind === 'l') i = nearestIn(list, s => s.syl && s.syl.includes(syl), ref);
+      if (note && settings.tapKind === 'n') {
+        if (note.v !== settings.tapNoteVoice) { settings.tapNoteVoice = note.v; $('tapNoteVoice').value = note.v; saveSettings(); }
+        const L = tapList();
+        const j = nearestIn(L, s => s.kind === 'n' && Math.abs(s.w - note.t) < EPS, ref);
+        if (j >= 0) { setCur(j); return; }
+      }
       if (i < 0) i = nearestIn(list, s => s.kind !== 'end' && t >= s.w - EPS && t < (s.wEnd ?? s.w) - EPS, ref);
       if (i < 0) i = nearestIn(list, s => s.kind !== 'end' && s.w <= t + EPS && s.seg.a <= t + EPS && t < s.seg.b, ref);
       if (i >= 0) setCur(i);
@@ -587,7 +628,7 @@
       seekV(tmap.pToV(P) - project.offset);
     }
   }
-  model.notes.forEach(n => n.el.addEventListener('click', () => onScoreClick(n.t, null)));
+  model.notes.forEach(n => n.el.addEventListener('click', () => onScoreClick(n.root ? n.root.t : n.t, null, n.root || n)));
   model.lyrics.forEach(s => s.el.addEventListener('click', e => { e.stopPropagation(); onScoreClick(s.t, s); }));
 
   // ======================================================================
@@ -688,19 +729,14 @@
       $('status').classList.remove('show');
     } catch (err) { toast('Piano indisponible.'); }
   };
-  function doubling(P) {
-    const v = $('dblVoice').value;
-    if (!piano || !v || P == null || !playing() || tab === 'tap') { dblLast = P; return; }
+  const doubler = C.doubler();
+  function doubling() {
+    const sel = $('dblVoice').value;
+    if (!piano || !sel || !playing() || tab === 'tap' || !hasMap()) { doubler.reset(); return; }
     if (!dblEvents || dblEvents.plan !== plan) { dblEvents = C.perfEvents(model, plan); dblEvents.plan = plan; }
-    if (dblLast != null && P > dblLast && P - dblLast < 0.5) {
-      const rate = video.rate();
-      for (const e of dblEvents) {
-        if (e.P <= dblLast || e.P > P || e.n.v !== v) continue;
-        const dur = Math.max(0.08, (tmap.pToV(e.P + e.dP) - tmap.pToV(e.P)) / rate - 0.03);
-        piano.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now(), 0.75);
-      }
-    }
-    dblLast = P;
+    const voicesOn = sel === 'all' ? model.voices : [sel];
+    doubler.tick(vTime(), video.rate(), voicesOn, v => dblEv[v] || (dblEv[v] = C.voiceEvents(dblEvents, v, vmap(v), project.offset)),
+      (e, delay, dur) => piano.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now() + delay, 0.75));
   }
 
   // ======================================================================
@@ -709,19 +745,23 @@
   function paintTap() {
     const list = tapList();
     const i = curIndex(list);
-    const key = `tap|${curKey}|${lastTapped}|${settings.tapKind}|${settings.tapUnit}|${settings.tapVoice}|${plan.segs.length}|${Object.keys(project.marks).length}`;
+    const key = `tap|${curKey}|${lastTapped}|${settings.tapKind}|${settings.tapUnit}|${settings.tapVoice}|${settings.tapNoteVoice}|${plan.segs.length}|${Object.keys(project.marks).length}`;
     if (key === lastPaintKey) return;
     lastPaintKey = key;
     const next = list[i] || null;
     let prev = lastTapped ? list.find(s => s.key === lastTapped) || keyIndex.get(lastTapped) : null;
     const ly = new Map();
+    const noteRects = u => u.notes.map(n => ({ page: n.page, x: n.x - 6, y: n.y - 5, w: 12, h: 10 }));
     if (next && next.kind === 'l') { next.syl.forEach(s => ly.set(s.el, 'cue-next')); paint('hl-next', sylRects(next.syl)); }
+    else if (next && next.kind === 'n') paint('hl-next', noteRects(next));
     else paint('hl-next', next && next.kind === 'm' ? rangeRects(next.w, next.wEnd) : []);
+    const on = new Set();
     if (prev && prev.kind === 'l') { prev.syl.forEach(s => ly.set(s.el, 'cue-last')); paint('hl-cur', []); }
+    else if (prev && prev.kind === 'n') { prev.notes.forEach(n => on.add(n.el)); paint('hl-cur', []); }
     else paint('hl-cur', prev && prev.kind === 'm' ? rangeRects(prev.w, prev.wEnd) : []);
     setLyClasses(ly);
     paint('hl-soft', []); paint('hl-bar', []);
-    setNotesOn(new Set());
+    setNotesOn(on);
     if (next) reveal('n' + next.key, 'hl-next'); else if (prev) reveal('p' + prev.key, 'hl-cur');
   }
   function paintFollow(P) {
@@ -851,15 +891,20 @@
       { id: 'audio', h: 52, name: 'Audio' },
       { id: 'm', h: 36, name: 'Mesures' },
     ];
-    groups.filter(g => markerList.some(m => m.voice === g.v) || (settings.tapKind === 'l' && settings.tapVoice === g.v))
-      .forEach(g => out.push({ id: 'l:' + g.v, h: 36, name: 'Paroles ' + g.v, voice: g.v }));
-    const fixed = out.reduce((s, t) => s + t.h, 0);
+    groups.filter(g => markerList.some(m => m.kind === 'l' && m.voice === g.v) || (settings.tapKind === 'l' && settings.tapVoice === g.v))
+      .forEach(g => out.push({ id: 'l:' + g.v, h: 36, name: 'Paroles ' + g.v, voice: g.v, kind: 'l' }));
+    model.voices.filter(v => markerList.some(m => m.kind === 'n' && m.voice === v) || (settings.tapKind === 'n' && settings.tapNoteVoice === v))
+      .forEach(v => out.push({ id: 'n:' + v, h: 36, name: 'Notes ' + v, voice: v, kind: 'n' }));
+    let fixed = out.reduce((s, t) => s + t.h, 0);
     if (fixed > H) out[2].h = Math.max(20, out[2].h - (fixed - H));
+    fixed = out.reduce((s, t) => s + t.h, 0);
+    const head = out[0].h + out[1].h + out[2].h;
+    if (fixed > H) out.slice(3).forEach(t => { t.h = Math.max(18, Math.floor(t.h * (H - head) / (fixed - head))); });
     let y = 0;
     out.forEach(t => { t.y = y; y += t.h; });
     return out;
   }
-  const trackOf = m => (m.kind === 'l' ? 'l:' + m.voice : 'm');
+  const trackOf = m => (m.kind === 'l' ? 'l:' + m.voice : m.kind === 'n' ? 'n:' + m.voice : 'm');
   function rulerStep() {
     for (const s of [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120]) if (s * pps >= 64) return s;
     return 300;
@@ -939,7 +984,7 @@
     if (tab === 'tap' && hasMap()) {
       const list = tapList(), st = list[curIndex(list)];
       if (st && !project.marks[st.key]) {
-        const tr = T.find(t => t.id === (st.kind === 'l' ? 'l:' + st.voice : 'm'));
+        const tr = T.find(t => t.id === trackOf(st));
         const t = tmap.pToV(st.P);
         if (tr && t != null) {
           const x = Math.round(tToX(t)) + 0.5;
@@ -990,7 +1035,8 @@
     g.font = '600 11px Inter, system-ui, sans-serif';
     T.forEach(tr => {
       if (!tr.name) return;
-      g.fillStyle = tr.voice && tr.voice === settings.tapVoice && settings.tapKind === 'l' ? colors.red : colors.ink2;
+      const cur = tr.voice && ((tr.kind === 'l' && settings.tapKind === 'l' && tr.voice === settings.tapVoice) || (tr.kind === 'n' && settings.tapKind === 'n' && tr.voice === settings.tapNoteVoice));
+      g.fillStyle = cur ? colors.red : colors.ink2;
       g.fillText(tr.name, 10, tr.y + tr.h / 2);
     });
     g.fillStyle = colors.ink; g.font = '600 11.5px Inter, system-ui, sans-serif';
@@ -1004,7 +1050,7 @@
     if (!tr) return { type: 'none' };
     if (tr.id === 'ruler') return { type: 'ruler' };
     if (x < GUT) return { type: 'gutter', tr };
-    if (tr.id === 'm' || tr.id.startsWith('l:')) {
+    if (tr.id === 'm' || tr.id.startsWith('l:') || tr.id.startsWith('n:')) {
       let best = null, bd = 7;
       for (const m of markerList) {
         if (trackOf(m) !== tr.id) continue;
@@ -1248,6 +1294,7 @@
       if (k === 'Backspace') { e.preventDefault(); if (selKey) delSel(); else untap(); return; }
       if (k === '1') { setTapMode('m'); return; }
       if (k === '2' && hasLyrics) { setTapMode('l'); return; }
+      if (k === '3') { setTapMode('n'); return; }
     } else if (k === 'Backspace' && selKey) { e.preventDefault(); delSel(); }
     else if (k === 'ArrowLeft' || k === 'ArrowRight') {
       e.preventDefault();
@@ -1278,12 +1325,12 @@
     if (v !== lastV) { lastV = v; tlDirty = true; }
     const c = fmtT(v) + '|' + (vReady() ? video.duration() : 0);
     if (c !== lastClock) { lastClock = c; $('clock').innerHTML = `${fmtT(v)}<small>/ ${fmtT(vReady() ? video.duration() : 0)}</small>`; }
-    if (tab === 'tap') { paintTap(); dblLast = null; }
+    if (tab === 'tap') { paintTap(); doubler.reset(); }
     else {
       const P = hasMap() ? tmap.vToP(v + project.offset) : null;
       const info = paintFollow(P);
       if (tab === 'check') refreshCheck(info);
-      doubling(P);
+      doubling();
     }
     if (playing()) {
       tlDirty = true;

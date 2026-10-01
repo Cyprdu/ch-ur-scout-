@@ -365,18 +365,72 @@ window.Chorale = (() => {
     return units;
   }
 
+  // Notes d'une voix dans l'ordre chanté (attaques seulement : pas les suites de liaison)
+  const NOTE_NAMES = ['Do', 'Do♯', 'Ré', 'Mi♭', 'Mi', 'Fa', 'Fa♯', 'Sol', 'La♭', 'La', 'Si♭', 'Si'];
+  const noteName = p => `${NOTE_NAMES[p % 12]}${Math.floor(p / 12) - 1}`;
+  function noteUnits(model, plan, voice) {
+    const units = [];
+    for (const s of plan.segs) {
+      const byT = new Map();
+      for (const n of model.notes) {
+        if (n.v !== voice || n.silent || n.t < s.a - EPS || n.t >= s.b - EPS) continue;
+        (byT.get(n.t) || byT.set(n.t, []).get(n.t)).push(n);
+      }
+      [...byT].sort((a, b) => a[0] - b[0]).forEach(([t, ns]) => {
+        ns.sort((a, b) => b.p - a.p);
+        units.push({
+          kind: 'n', voice, key: `n|${voice}|${s.sig}|${t}`, P: s.off + (t - s.a), w: t,
+          wEnd: Math.min(s.b, t + Math.max(...ns.map(n => n.sd))), seg: s, notes: ns,
+          tx: ns.map(n => noteName(n.p)).join('+'),
+        });
+      });
+    }
+    units.forEach((u, i) => { u.i = i; u.label = u.tx; });
+    return units;
+  }
+  /** Correspondance propre à une voix : ses repères de notes d'abord, puis paroles et mesures. */
+  function voiceTimeMap(points, voice, TOTAL) {
+    return timeMap(points.filter(p => p.kind !== 'n' || p.voice === voice), TOTAL);
+  }
+
+  /** Notes d'une voix avec leurs instants dans l'enregistrement (t0, t1), d'après la correspondance de cette voix. */
+  function voiceEvents(events, voice, map, offset = 0) {
+    return events.filter(e => e.n.v === voice).map(e => {
+      const t0 = map.pToV(e.P), t1 = map.pToV(e.P + e.dP);
+      return { ...e, t0: t0 - offset, t1: t1 - offset };
+    }).filter(e => isFinite(e.t0) && isFinite(e.t1)).sort((a, b) => a.t0 - b.t0);
+  }
+  /** Programme les notes du piano un peu à l'avance pour qu'elles tombent pile avec l'enregistrement. */
+  function doubler(lookahead = 0.15) {
+    let until = null;
+    return {
+      reset() { until = null; },
+      tick(v, rate, voices, eventsOf, trigger) {
+        if (until == null || v < until - 0.3 || v > until + 1.5) until = v;   // saut dans l'audio
+        const horizon = v + lookahead * rate;
+        if (horizon <= until) return;
+        for (const vc of voices) for (const e of eventsOf(vc)) {
+          if (e.t0 <= until || e.t0 > horizon) continue;
+          trigger(e, Math.max(0, (e.t0 - v) / rate), Math.max(0.08, (e.t1 - e.t0) / rate - 0.03));
+        }
+        until = horizon;
+      },
+    };
+  }
+
   // ======================================================================
   // Correspondance temps vidéo <-> position jouée
   // ======================================================================
+  // Priorité à position égale : note (la plus fine) > parole > mesure
+  const PRIO = { n: 3, l: 2, m: 1, end: 1 };
   /** points: [{P, t, key, kind}] -> plus longue suite cohérente (P et t croissants). */
-  function timeMap(points, TOTAL) {
+  function timeMap(points, TOTAL, prio = p => PRIO[p.kind] || 0) {
     const byP = new Map();
     for (const p of points) {
       if (!isFinite(p.P) || !isFinite(p.t)) continue;
       const k = Math.round(p.P * 1e6);
       const o = byP.get(k);
-      // À même position, un repère de parole (plus fin) l'emporte sur une mesure
-      if (!o || (p.kind === 'l' && o.kind !== 'l')) byP.set(k, p);
+      if (!o || prio(p) > prio(o)) byP.set(k, p);
     }
     const pts = [...byP.values()].sort((a, b) => a.P - b.P);
     // Plus longue sous-suite strictement croissante en t (patience sorting)
@@ -703,7 +757,7 @@ window.Chorale = (() => {
   return {
     EPS, NS, VOICE_NAMES, verseColor, esc, fmt, fmtBeats,
     generateOrder, mergeOrder, defaultOrder, versesOfOrder, allVerses, makePlan,
-    mountScore, measureSteps, lyricUnits, timeMap, youtube, audioFile, loadYouTubeApi,
+    mountScore, measureSteps, lyricUnits, noteUnits, noteName, timeMap, voiceTimeMap, voiceEvents, doubler, youtube, audioFile, loadYouTubeApi,
     structureEditor, structureConfig, orderFromConfig, loadScript, store, toaster, perfEvents, normalizeSync,
   };
 })();

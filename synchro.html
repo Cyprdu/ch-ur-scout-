@@ -71,6 +71,11 @@
         <div class="seg2" id="tapKind">
           <button data-k="m" class="active">Mesures</button>
           <button data-k="l">Paroles</button>
+          <button data-k="n" title="Une frappe par note d'un pupitre : la doublure au piano suit alors exactement ce pupitre">Notes</button>
+        </div>
+        <div class="row2" id="noteOpts" hidden>
+          <span>Pupitre</span>
+          <select class="select" id="tapNoteVoice" title="Notes de quel pupitre ?"></select>
         </div>
         <div class="row2" id="lyrOpts" hidden>
           <select class="select" id="tapVoice" title="Paroles de quelle voix ?"></select>
@@ -133,7 +138,7 @@
         <div class="box">
           <h4>Affichage</h4>
           <div class="row2"><span>Paroles en rouge</span><select class="select" id="lyrHl"></select></div>
-          <div class="row2"><span>Doubler au piano</span><select class="select" id="dblVoice"><option value="">Non</option></select></div>
+          <div class="row2"><span>Doubler au piano</span><select class="select" id="dblVoice"><option value="">Non</option><option value="all">Toutes les voix</option></select></div>
           <div class="row2"><span>Volume de la vidéo</span><input type="range" id="vol" min="0" max="100" value="100"></div>
         </div>
         <div class="box">
@@ -203,7 +208,7 @@
       <h5>Taper</h5>
       <kbd>→</kbd> <kbd>Entrée</kbd><span>Poser le repère suivant</span>
       <kbd>←</kbd><span>Annuler le dernier repère posé</span>
-      <kbd>1</kbd> <kbd>2</kbd><span>Taper les mesures / les paroles</span>
+      <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd><span>Taper les mesures / les paroles / les notes</span>
       <h5>Corriger</h5>
       <kbd>←</kbd> <kbd>→</kbd><span>Avec un repère sélectionné : le décaler de 0,01 s (<kbd>Maj</kbd> : 0,1 s)</span>
       <kbd>Suppr</kbd><span>Supprimer le repère sélectionné</span>
@@ -225,7 +230,7 @@
 
 <script src="assets/icons.js?v=5"></script>
 <script>/* liste des chants toujours à jour (elle change à chaque publication) */document.write('<script src="chants.js?' + Date.now() + '"><\/script>')</script>
-<script src="assets/core.js?v=13"></script>
-<script src="assets/synchro.js?v=11"></script>
+<script src="assets/core.js?v=14"></script>
+<script src="assets/synchro.js?v=12"></script>
 </body>
 </html>

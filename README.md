@@ -27,4 +27,6 @@ Settings → Pages → *Deploy from a branch* → `main` / `(root)`.
 
 ## Synchroniser un enregistrement
 
-Double-cliquer sur `serveur-local.bat` (ou `python sources/studio.py`), puis ouvrir `http://localhost:8000/synchro.html` : choisir le chant et la vidéo YouTube, indiquer les couplets chantés, taper `→` à chaque mesure ou à chaque mot pendant la lecture, vérifier, corriger dans la frise, puis « Publier » (écrit `chants/<id>/synchro.json` et télécharge l'enregistrement en MP3). La forme d'onde et l'aimant sur les attaques demandent `yt-dlp` et `ffmpeg`.
+Double-cliquer sur `serveur-local.bat` (ou `python sources/studio.py`), puis ouvrir `http://localhost:8000/synchro.html` : choisir le chant et la vidéo YouTube, indiquer les couplets chantés, taper `→` à chaque mesure, à chaque mot ou à chaque note d'un pupitre pendant la lecture, vérifier, corriger dans la frise, puis « Publier » (écrit `chants/<id>/synchro.json` et télécharge l'enregistrement en MP3). La forme d'onde et l'aimant sur les attaques demandent `yt-dlp` et `ffmpeg`.
+
+En mode enregistrement, le lecteur peut jouer une ou plusieurs voix au piano par-dessus l'enregistrement ; chaque voix suit ses propres repères de notes, et deux curseurs (Enreg. / Piano) règlent l'équilibre.

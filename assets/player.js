@@ -165,21 +165,34 @@
     }
     return video.whenReady;
   }
-  const seekVideo = P => { if (video && video.ready) { video.seek(P <= EPS ? 0 : tmap.pToV(P) - vOffset); dblLast = null; } };
-  // Doublure au piano de la voix « solo » par-dessus l'enregistrement
-  let dblEvents = [], dblLast = null;
-  function doubling(P) {
-    if (solo && playing && P != null && dblLast != null && P > dblLast && P - dblLast < 0.5) {
-      const rate = video.rate();
-      const inst = pianoReady ? piano : organ;
-      for (const e of dblEvents) {
-        if (e.P <= dblLast || e.P > P || e.n.v !== solo) continue;
-        const dur = Math.max(0.08, (tmap.pToV(e.P + e.dP) - tmap.pToV(e.P)) / rate - 0.03);
-        inst.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now(), 0.75);
-      }
-    }
-    dblLast = P;
+  const doubler = C.doubler();
+  const seekVideo = P => { if (video && video.ready) { video.seek(P <= EPS ? 0 : tmap.pToV(P) - vOffset); doubler.reset(); } };
+  // Piano par-dessus l'enregistrement : chaque voix suit ses propres repères (notes tapées
+  // dans le studio), à défaut ceux des paroles et des mesures
+  let dblEvents = [];
+  const pianoOn = Object.fromEntries(voices.map(v => [v, false]));
+  const dblOn = v => (solo ? v === solo : pianoOn[v]);
+  const vmaps = {}, vevents = {};
+  const vmapOf = v => vmaps[v] || (vmaps[v] = C.voiceTimeMap(sync.marks, v, syncPlan.TOTAL));
+  function doubling() {
+    const on = voices.filter(dblOn);
+    if (!on.length || !playing || !video || !video.ready) { doubler.reset(); return; }
+    const inst = pianoReady ? piano : organ;
+    doubler.tick(video.time(), video.rate(), on, v => vevents[v] || (vevents[v] = C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)),
+      (e, delay, dur) => inst.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now() + delay,
+        e.n.v === 'S' || e.n.v === 'Solo' ? 0.75 : 0.65));
   }
+
+  // ---------- Mixage enregistrement / piano ----------
+  const mix = Object.assign({ rec: 100, piano: 70 }, store.get('chorale.mix') || {});
+  const applyMix = () => {
+    if (video && video.ready) video.volume(mix.rec);
+    out.gain.value = source === 'video' ? 1.1 * mix.piano / 100 : 0.85;
+    store.set('chorale.mix', mix);
+  };
+  $('volRec').value = mix.rec; $('volPiano').value = mix.piano;
+  $('volRec').oninput = e => { mix.rec = +e.target.value; applyMix(); };
+  $('volPiano').oninput = e => { mix.piano = +e.target.value; applyMix(); };
 
   // ---------- Lecture ----------
   async function play() {
@@ -204,6 +217,7 @@
   function pause() {
     if (source === 'video') {
       if (video) video.pause();
+      doubler.reset(); piano.releaseAll(); organ.releaseAll();
       playing = false; updatePlayBtn(); cancelAnimationFrame(raf); render(pos);
       return;
     }
@@ -228,7 +242,7 @@
     if (!playing) return;
     if (source === 'video') {
       const P = tmap.vToP(video.time() + vOffset);
-      doubling(P);
+      doubling();
       pos = P == null ? 0 : P;
       if (P != null && P >= plan.TOTAL - EPS && loop) { seek(0, true); return; }
       render(pos);
@@ -257,7 +271,16 @@
     const w = Math.min(plan.toWritten(P), END - EPS);
     const on = new Set();
     const active = playing || P > 0;
-    if (playing) for (const n of notes) if (audible(n.v) && w >= n.t - EPS && w < n.t + n.d - EPS) on.add(n.el);
+    if (playing && source === 'video' && video && video.ready) {
+      const t = video.time() + vOffset, any = voices.some(dblOn);
+      for (const v of voices) {
+        if (any && !dblOn(v)) continue;
+        const Pv = vmapOf(v).vToP(t);
+        if (Pv == null || Pv >= plan.TOTAL - EPS) continue;
+        const wv = plan.toWritten(Pv);
+        for (const n of notes) if (n.v === v && wv >= n.t - EPS && wv < n.t + n.d - EPS) on.add(n.el);
+      }
+    } else if (playing) for (const n of notes) if (audible(n.v) && w >= n.t - EPS && w < n.t + n.d - EPS) on.add(n.el);
     if (active && P < plan.TOTAL - EPS && lyricsMode !== 'off') for (const s of model.lyricsAt(w, seg.v, lyricFilter())) on.add(s.el);
     lastOn.forEach(el => { if (!on.has(el)) el.classList.remove('on'); });
     on.forEach(el => el.classList.add('on'));
@@ -336,17 +359,22 @@
     const name = VOICE_NAMES[v] || v;
     el.innerHTML = `<button class="v-name" title="Activer / couper la voix"><span class="led"></span><span class="full">${name}</span><span class="short">${SHORT[v] || name}</span></button>` +
       `<button class="v-solo" title="Écouter cette voix seule">${icon('headphones')}</button>`;
-    el.querySelector('.v-name').onclick = () => { if (solo) solo = null; else vstate[v] = !vstate[v]; refreshVoices(); };
+    el.querySelector('.v-name').onclick = () => {
+      if (solo) solo = null;
+      else if (source === 'video') pianoOn[v] = !pianoOn[v];
+      else vstate[v] = !vstate[v];
+      refreshVoices();
+    };
     el.querySelector('.v-solo').onclick = () => { solo = solo === v ? null : v; refreshVoices(); };
     vbox.appendChild(el);
   });
   function refreshVoices() {
     vbox.querySelectorAll('.voice').forEach(el => {
       const v = el.dataset.v;
-      el.classList.toggle('muted', !audible(v));
+      el.classList.toggle('muted', source === 'video' ? !dblOn(v) : !audible(v));
       el.classList.toggle('solo', solo === v);
     });
-    if (playing && source !== 'video') seek(pos); else render(pos);
+    if (playing && source !== 'video') seek(pos); else { doubler.reset(); render(pos); }
   }
 
   // Clic sur une note ou une syllabe : reprendre à cet endroit (occurrence la plus proche)
@@ -439,10 +467,13 @@
     videoBtn.classList.toggle('primary', !on);
     $('ccTitle').textContent = on ? 'Vous écoutez l’enregistrement original' : 'Écoutez le chœur, la partition suit';
     $('ccSub').textContent = on
-      ? 'Notes et paroles suivent le chant. Le casque d’une voix (en bas) la double au piano pour mieux l’entendre.'
+      ? 'Touchez une ou plusieurs voix en bas pour les jouer au piano par-dessus l’enregistrement, et réglez l’équilibre avec les curseurs Enreg. / Piano.'
       : 'Un enregistrement du chant est synchronisé : les notes et les paroles s’allument en rouge au moment où elles sont chantées.';
     document.querySelectorAll('.v-solo').forEach(b => {
-      b.title = src === 'video' ? 'Doubler cette voix au piano' : 'Écouter cette voix seule';
+      b.title = src === 'video' ? 'Jouer seulement cette voix au piano' : 'Écouter cette voix seule';
+    });
+    document.querySelectorAll('.v-name').forEach(b => {
+      b.title = src === 'video' ? 'Jouer / couper cette voix au piano, par-dessus l’enregistrement' : 'Activer / couper la voix';
     });
     plan = src === 'video' ? syncPlan : pianoPlan;
     if (src === 'video') dblEvents = C.perfEvents(model, plan);
@@ -451,6 +482,7 @@
     else editor.set(cfg);
     drawSegments(); updateStructBtn();
     if (src === 'video') { toast('Chargement de l’enregistrement…', 0); await loadVideo(); status.classList.remove('show'); }
+    applyMix(); refreshVoices();
     seek(Math.min(frac * plan.TOTAL, plan.TOTAL), wasPlaying);
   }
   if (hasVideo) {
