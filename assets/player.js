@@ -61,7 +61,7 @@
     const svg = sheet.querySelector('svg');
     const ov = svg.querySelector('.overlay');
     const under = document.createElementNS(NS, 'g');
-    under.setAttribute('transform', ov.getAttribute('transform'));
+    if (ov.getAttribute('transform')) under.setAttribute('transform', ov.getAttribute('transform'));
     const cur = document.createElementNS(NS, 'rect');
     cur.setAttribute('class', 'cursor'); cur.setAttribute('rx', 0.6); cur.setAttribute('width', 3);
     cur.style.display = 'none';
@@ -233,7 +233,11 @@
   }
   function tick() {
     if (!playing) return;
-    pos = startPos + Math.max(0, T.seconds) / secPerWhole();
+    // Position réellement entendue : le Transport est en avance du « lookAhead » de Tone
+    // et de la latence de sortie audio ; on se cale sur l'horloge audio.
+    const ctx = Tone.context, raw = ctx.rawContext || {};
+    const heard = ctx.currentTime - (raw.outputLatency || raw.baseLatency || 0);
+    pos = startPos + Math.max(0, T.getSecondsAtTime(heard)) / secPerWhole();
     if (pos >= TOTAL) {
       if (loop) { pos = 0; schedule(0); }
       else { playing = false; stopAudio(); updatePlayBtn(); pos = TOTAL; render(pos); return; }

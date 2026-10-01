@@ -139,7 +139,7 @@ button { font: inherit; color: inherit; }
   margin-bottom: 22px; overflow: hidden; border: 1px solid var(--line);
 }
 .sheet svg { display: block; width: 100%; height: auto; }
-.nh { color: transparent; cursor: pointer; }
+.nh { color: transparent; fill: currentColor; cursor: pointer; }
 .nh:hover { color: rgba(200, 35, 31, .35); }
 .nh.on { color: var(--red); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nh.on { color: #d42a24; } }

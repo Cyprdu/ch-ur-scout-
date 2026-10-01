@@ -1,19 +1,21 @@
-"""Construit le site : PDF + SVG annotés + données JS pour chaque chant.
+"""Construit le site : PDF + SVG d'affichage + positions des notes + données JS pour chaque chant.
 
 usage : python build.py [id ...]      (sans argument : tous les chants)
 """
 import json, os, re, shutil, subprocess, sys, glob
+import fitz  # PyMuPDF
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SITE = os.path.join(ROOT, 'site') if os.path.isdir(os.path.join(ROOT, 'site')) else ROOT
 TMP = os.path.join(ROOT, 'build', 'web')
-LILYPOND = os.environ.get('LILYPOND') or shutil.which('lilypond') or 'lilypond'
-PAGE_W_PT = 595.2756  # A4
+LILYPOND = os.environ.get('LILYPOND') or shutil.which('lilypond') or \
+    r'C:/Users/cypri/AppData/Local/Temp/claude/C--Users-cypri-Downloads-Nouveau-dossier/b72d01b3-3782-4219-843d-e8350c48d756/scratchpad/lilypond-2.24.4/bin/lilypond.exe'
 
 
-def run(args):
-    r = subprocess.run([LILYPOND, '-dno-point-and-click', *args], cwd=HERE,
+def run(args, annotate=False):
+    env = dict(os.environ, CHORALE_ANNOTATE='1') if annotate else {k: v for k, v in os.environ.items() if k != 'CHORALE_ANNOTATE'}
+    r = subprocess.run([LILYPOND, '-dno-point-and-click', *args], cwd=HERE, env=env,
                        capture_output=True, text=True, encoding='utf-8', errors='replace')
     errs = [l for l in r.stderr.splitlines() if re.search(r'erreur|error', l, re.I)]
     if r.returncode != 0 or errs:
@@ -38,6 +40,32 @@ def prefix_ids(svg, pfx):
     return svg
 
 
+def note_overlay(pdf_page, svg):
+    """Notes du lecteur : un <use> par tête de note, copie exacte du glyphe affiché.
+
+    Les liens « http://n/?… » du PDF annoté donnent la note (voix, temps, hauteur…)
+    et le cadre de sa tête ; on retrouve dans le SVG (même mise en page) le glyphe
+    dessiné à cet endroit."""
+    uses = [(m.group(1), float(m.group(2)), float(m.group(3)))
+            for m in re.finditer(r'<use xlink:href="#([^"]+)" x="([-\d.]+)" y="([-\d.]+)"/>', svg)]
+    out = []
+    for link in pdf_page.get_links():
+        uri = link.get('uri') or ''
+        if not uri.startswith('http://n/?'):
+            continue
+        r = link['from']
+        cy = (r.y0 + r.y1) / 2
+        cand = [(abs(x - r.x0) + abs(y - cy), g, x, y) for g, x, y in uses
+                if r.x0 - 1.5 <= x <= r.x0 + 1.5 and r.y0 - 1 <= y <= r.y1 + 1]
+        if not cand:
+            raise SystemExit(f'tête de note introuvable dans le SVG : {uri} {r}')
+        _, g, x, y = min(cand)
+        attrs = dict(kv.split('=', 1) for kv in uri[len('http://n/?'):].split('&'))
+        data = ' '.join(f'data-{k}="{v}"' for k, v in attrs.items())
+        out.append(f'<use class="nh" {data} xlink:href="#{g}" x="{x}" y="{y}"/>')
+    return out
+
+
 def build_song(song):
     sid = song['id']
     out = os.path.join(SITE, 'chants', sid)
@@ -45,30 +73,26 @@ def build_song(song):
     os.makedirs(TMP, exist_ok=True)
     src = song.get('file', sid) + '.ly'
     print(f'• {sid}')
-    # 1. PDF
+    # 1. PDF à télécharger
     run(['-o', os.path.join(out, sid), src])
-    # 2. SVG annoté (positions + temps des notes)
-    for f in glob.glob(os.path.join(TMP, sid + '*.svg')):
+    # 2. Une seule mise en page Cairo -> PDF annoté (liens sur les têtes) + SVG d'affichage
+    for f in glob.glob(os.path.join(TMP, sid + '*')):
         os.remove(f)
-    run(['-dbackend=svg', '-o', os.path.join(TMP, sid + '_a'), src])
-    # 3. SVG d'affichage (texte vectorisé, rendu identique au PDF)
-    run(['-dbackend=cairo', '--svg', '-o', os.path.join(TMP, sid + '_c'), src])
-    ann, disp = pages(os.path.join(TMP, sid + '_a')), pages(os.path.join(TMP, sid + '_c'))
-    assert len(ann) == len(disp), (ann, disp)
+    base = os.path.join(TMP, sid)
+    run(['-dbackend=cairo', '--pdf', '--svg', '-o', base, src], annotate=True)
+    disp = pages(base)
+    doc = fitz.open(base + '.pdf')
+    assert len(disp) == len(doc), (disp, len(doc))
     out_pages = []
     total = 0
-    for i, (a, c) in enumerate(zip(ann, disp)):
-        sa = open(a, encoding='utf-8').read()
+    for i, c in enumerate(disp):
         sc = open(c, encoding='utf-8').read()
-        vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', sa).group(1).split()]
-        k = PAGE_W_PT / vb[2]
-        groups = re.findall(r'<g class="nh".*?</g>\s*</g>', sa, flags=re.S)
-        total += len(groups)
         sc = sc[sc.index('<svg'):]
         sc = prefix_ids(sc, f'{sid}{i}-')
+        notes = note_overlay(doc[i], sc)
+        total += len(notes)
         sc = re.sub(r'<svg ([^>]*?)width="[^"]*" height="[^"]*"', r'<svg \1', sc, count=1)
-        overlay = f'<g class="overlay" transform="scale({k:.6f})">' + ''.join(g.replace('\n', '') for g in groups) + '</g>'
-        sc = sc.replace('</svg>', overlay + '</svg>')
+        sc = sc.replace('</svg>', '<g class="overlay">' + ''.join(notes) + '</g></svg>')
         out_pages.append(sc)
     data = {k: v for k, v in song.items() if k not in ('file',)}
     data['pages'] = out_pages

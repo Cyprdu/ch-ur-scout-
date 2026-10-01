@@ -22,9 +22,30 @@
          (data-d . ,(number->string (exact->inexact (ly:moment-main (ly:duration-length d)))))
          ,@(if tied '((data-tie . "1")) '())))))
 
+% En mode annotation (variable d'environnement CHORALE_ANNOTATE=1),
+% chaque tête de note porte un lien invisible « http://n/?v=…&t=… » :
+% build.py lit ces liens dans le PDF Cairo, issu de la même mise en page
+% que le SVG affiché, et place la note rouge exactement sur la tête.
+#(define (note-link-stencil voice)
+   (let ((attrs (note-attrs voice)))
+     (lambda (grob)
+       (let* ((s (ly:note-head::print grob))
+              (url (string-append "http://n/?"
+                     (string-join
+                       (filter-map (lambda (kv)
+                                     (and (string-prefix? "data-" (symbol->string (car kv)))
+                                          (string-append (substring (symbol->string (car kv)) 5) "=" (cdr kv))))
+                                   (attrs grob))
+                       "&")))
+              (x (ly:stencil-extent s X))
+              (y (ly:stencil-extent s Y)))
+         (ly:stencil-add s (ly:make-stencil (list 'url-link url x y) x y))))))
+
 voiceAttrs =
 #(define-scheme-function (v) (string?)
-   #{ \with { \override NoteHead.output-attributes = #(note-attrs v) } #})
+   (if (getenv "CHORALE_ANNOTATE")
+       #{ \with { \override NoteHead.stencil = #(note-link-stencil v) } #}
+       #{ \with { } #}))
 
 % Accords en notation française (texte libre, ex. \ch "La♭" 2)
 ch = #(define-music-function (txt dur) (markup? ly:duration?)
