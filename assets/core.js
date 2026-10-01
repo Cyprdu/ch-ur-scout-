@@ -487,7 +487,11 @@ window.Chorale = (() => {
     a.addEventListener('playing', () => set(1));
     a.addEventListener('pause', () => set(a.ended ? 0 : 2));
     a.addEventListener('waiting', () => set(3));
-    a.src = url;
+    // Fichier chargé en entier puis lu depuis la mémoire : les sauts marchent même si
+    // l'hébergeur ne gère pas les requêtes partielles (« Range »)
+    fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+      .then(blob => { a.src = URL.createObjectURL(blob); })
+      .catch(() => { a.src = url; });
     p.playing = () => p.state === 1;
     p.time = () => a.currentTime || 0;
     p.duration = () => (isFinite(a.duration) ? a.duration : 0);
