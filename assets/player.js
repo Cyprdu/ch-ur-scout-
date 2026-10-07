@@ -5,7 +5,7 @@
   const { EPS, store, fmt } = C;
   const $ = id => document.getElementById(id);
   const VOICE_NAMES = C.VOICE_NAMES;
-  const SHORT = { S: 'Sop.', A: 'Alto', T: 'Tén.', B: 'Bas.', Solo: 'Solo' };
+  const SHORT = { S: 'Sop.', S2: 'Sop. 2', A: 'Alto', T: 'Tén.', B: 'Bas.', Solo: 'Solo' };
   const toast = C.toaster($('status'));
   const status = $('status');
 
@@ -179,7 +179,7 @@
     if (!on.length || !playing || !video || !video.ready) { doubler.reset(); return; }
     const inst = pianoReady ? piano : organ;
     doubler.tick(video.time(), video.rate(), on, v => vevents[v] || (vevents[v] = C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)),
-      (e, delay, dur) => inst.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now() + delay,
+      (e, delay, dur) => inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), dur, Tone.now() + delay,
         e.n.v === 'S' || e.n.v === 'Solo' ? 0.75 : 0.65));
   }
 

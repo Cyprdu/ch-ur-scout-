@@ -1,6 +1,6 @@
 """Serveur local du site + studio de synchronisation.
 
-usage : python studio.py [port]          (par défaut 8000)
+usage : python studio.py [port]          (par défaut 8765)
 
 - sert le dossier site/ sans cache (les modifications apparaissent tout de suite) ;
 - /api/status                 : ce que le serveur sait faire ;
@@ -286,7 +286,7 @@ def main():
         print('Téléchargement des enregistrements en MP3 :')
         mp3_all()
         return
-    port = next((int(a) for a in sys.argv[1:] if a.isdigit()), 8000)
+    port = next((int(a) for a in sys.argv[1:] if a.isdigit()), 8765)
     srv = ThreadingHTTPServer(('127.0.0.1', port), Handler)
     url = f'http://localhost:{port}/synchro.html'
     print(f'Studio de synchronisation : {url}')

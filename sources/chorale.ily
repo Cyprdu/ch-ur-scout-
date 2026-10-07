@@ -11,8 +11,6 @@
      (let* ((ev (event-cause grob))
             (p (ly:event-property ev 'pitch))
             (d (ly:event-property ev 'duration))
-            (arts (ly:event-property ev 'articulations '()))
-            (tied (any (lambda (a) (memq 'tie-event (ly:event-property a 'class '()))) arts))
             (m (grob::when grob))
             (loc (grob::rhythmic-location grob)))
        `((class . "nh") (data-v . ,voice)
@@ -20,7 +18,7 @@
          (data-t . ,(number->string (exact->inexact (ly:moment-main m))))
          (data-p . ,(number->string (+ 60 (ly:pitch-semitones p))))
          (data-d . ,(number->string (exact->inexact (ly:moment-main (ly:duration-length d)))))
-         ,@(if tied '((data-tie . "1")) '())))))
+))))
 
 % En mode annotation (variable d'environnement CHORALE_ANNOTATE=1),
 % chaque tête de note porte un lien invisible « http://n/?v=…&t=… » :
@@ -41,10 +39,31 @@
               (y (ly:stencil-extent s Y)))
          (ly:stencil-add s (ly:make-stencil (list 'url-link url x y) x y))))))
 
+% Liaison de prolongation : lien « http://t/?v=…&t=…&p=… » sur le trait,
+% qui désigne la note de départ (build.py la marque data-tie="1").
+#(define (tie-link-stencil voice)
+   (lambda (grob)
+     (let* ((s (ly:tie::print grob))
+            (orig (ly:grob-original grob))
+            (left (and orig (ly:spanner-bound orig LEFT))))
+       (if (and (ly:grob? left) (ly:stencil? s)
+                (ly:stream-event? (event-cause left)))
+           (let ((p (ly:event-property (event-cause left) 'pitch)))
+             (ly:stencil-add s
+               (ly:make-stencil
+                (list 'url-link
+                      (string-append "http://t/?v=" voice
+                                     "&t=" (number->string (exact->inexact (ly:moment-main (grob::when left))))
+                                     "&p=" (number->string (+ 60 (ly:pitch-semitones p))))
+                      '(0 . 0.05) '(0 . 0.05))
+                '(0 . 0.01) '(0 . 0.01))))
+           s))))
+
 voiceAttrs =
 #(define-scheme-function (v) (string?)
    (if (getenv "CHORALE_ANNOTATE")
-       #{ \with { \override NoteHead.stencil = #(note-link-stencil v) } #}
+       #{ \with { \override NoteHead.stencil = #(note-link-stencil v)
+                  \override Tie.stencil = #(tie-link-stencil v) } #}
        #{ \with { } #}))
 
 % --- Paroles annotées pour le lecteur web (ignorées dans le PDF) ---

@@ -160,7 +160,7 @@
   // Plan, étapes et repères
   // ======================================================================
   const PKEY = `chorale.studio.${chantId}.${videoId}`;
-  let project = { cfg: C.structureConfig(meta, null), marks: {}, offset: 0 };
+  let project = { cfg: C.structureConfig(meta, null), marks: {}, offset: 0, tune: [] };
   let plan, mSteps, endStep, keyIndex, unitCache, tmap, markerList = [];
   let allPoints = [], vmaps = {}, dblEv = {};
   // Correspondance propre à un pupitre (ses repères de notes d'abord)
@@ -235,7 +235,7 @@
       if (!cfg.verses.length) cfg.verses = [1];
     }
     const saved = project;
-    project = { cfg, marks: {}, offset: n.offset || 0 };
+    project = { cfg, marks: {}, offset: n.offset || 0, tune: Array.isArray(obj.tune) ? obj.tune : [] };
     rebuild();
     let lost = 0;
     for (const m of n.marks) {
@@ -267,6 +267,7 @@
       format: 'chorale-synchro/2', chant: chantId, title: meta.title, video: videoId,
       offset: project.offset, created: new Date().toISOString(),
       structure: project.cfg, order: plan.order, marks,
+      ...(project.tune && project.tune.length ? { tune: project.tune } : {}),
     };
   }
 
@@ -275,7 +276,7 @@
   const local = store.get(PKEY);
   rebuild();
   if (local && local.cfg && local.marks) {
-    project = { cfg: C.structureConfig(meta, local.cfg), marks: local.marks, offset: local.offset || 0 };
+    project = { cfg: C.structureConfig(meta, local.cfg), marks: local.marks, offset: local.offset || 0, tune: local.tune || [] };
     rebuild();
   } else if (published && published.video === videoId) {
     try { fromFile(published); toast('Synchro publiée chargée : vous pouvez la retoucher.'); } catch (e) { toast('La synchro publiée est illisible.'); }
@@ -315,6 +316,7 @@
     afterChange(JSON.stringify(project.cfg) !== cfgBefore);
     editor.set(project.cfg);
     showOffset();
+    showTune();
   }
   function undo() { if (!history.length) return; future.push(snapshot()); restore(history.pop()); toast('Annulé', 1200); }
   function redo() { if (!future.length) return; history.push(snapshot()); restore(future.pop()); toast('Rétabli', 1200); }
@@ -337,7 +339,7 @@
   // ======================================================================
   let video = null, x0Set = false;
   if (location.protocol === 'file:') {
-    $('yt').innerHTML = '<div class="msg">YouTube refuse de s\'afficher dans une page ouverte par double-clic.<br>Lancez <b>serveur-local.bat</b> puis ouvrez http://localhost:8000/synchro.html</div>';
+    $('yt').innerHTML = '<div class="msg">YouTube refuse de s\'afficher dans une page ouverte par double-clic.<br>Lancez <b>serveur-local.bat</b> puis ouvrez http://localhost:8765/synchro.html</div>';
   } else {
     video = C.youtube('yt', videoId, {
       onState: () => { updatePlayBtn(); tlDirty = true; },
@@ -359,7 +361,11 @@
   $('tBack').onclick = () => seekV(vTime() - 2);
   $('tFwd').onclick = () => seekV(vTime() + 2);
   $('rate').onchange = e => { if (vReady()) video.rate(+e.target.value); e.target.blur(); };
-  $('vol').oninput = e => { if (vReady()) video.volume(+e.target.value); };
+  // deux curseurs (Options et Vérifier) pour le volume de l'enregistrement, synchronisés
+  for (const id of ['vol', 'vol2']) $(id).oninput = e => {
+    if (vReady()) video.volume(+e.target.value);
+    $('vol').value = $('vol2').value = e.target.value;
+  };
 
   // ---------- Audio analysé (forme d'onde, attaques) ----------
   let audio = null, audioState = api && api.audio ? 'loading' : 'none';
@@ -636,6 +642,66 @@
   // ======================================================================
   const showOffset = () => { const o = project.offset; $('offVal').textContent = `${o >= 0 ? '+' : '−'}${Math.abs(o).toFixed(2).replace('.', ',')} s`; };
   showOffset();
+
+  // ---------- Justesse du piano : courbe de points clés (cents) sur le temps de l'enregistrement ----------
+  // Une chorale baisse souvent au fil du chant : le piano suit la courbe pour rester juste avec elle.
+  let tuneSel = null;                       // index du point sélectionné (dans project.tune trié)
+  const fmtC = c => `${c > 0 ? '+' : c < 0 ? '−' : ''}${Math.abs(Math.round(c))} cents`;
+  const sortTune = () => project.tune.sort((a, b) => a.t - b.t);
+  function showTune() {
+    if (!project.tune) project.tune = [];
+    sortTune();
+    if (tuneSel != null && tuneSel >= project.tune.length) tuneSel = project.tune.length ? project.tune.length - 1 : null;
+    const p = tuneSel != null ? project.tune[tuneSel] : null;
+    $('tuneSlider').disabled = !p; $('tuneDel').disabled = !p;
+    $('tuneSlider').value = p ? p.c : Math.round(C.tuneAt(project.tune, vTime()));
+    $('tuneVal').textContent = fmtC(p ? p.c : C.tuneAt(project.tune, vTime()));
+    $('tuneList').innerHTML = project.tune.length ? project.tune.map((k, i) =>
+      `<button class="tune-pt${i === tuneSel ? ' active' : ''}" data-i="${i}">${C.fmt(k.t)} · ${fmtC(k.c)}</button>`).join('')
+      : '<span class="hint">Aucun point : le piano reste au diapason.</span>';
+    $('tuneList').querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
+      tuneSel = +b.dataset.i; seekV(project.tune[tuneSel].t); showTune(); b.blur();
+    });
+  }
+  $('tuneAdd').onclick = e => {
+    e.target.blur();
+    const t = r3(vTime());
+    change(() => {
+      const near = project.tune.findIndex(k => Math.abs(k.t - t) < 0.5);
+      if (near < 0) project.tune.push({ t, c: Math.round(C.tuneAt(project.tune, t)) });
+      sortTune();
+      tuneSel = project.tune.findIndex(k => Math.abs(k.t - t) < 0.5);
+    });
+    showTune();
+  };
+  $('tuneDel').onclick = e => {
+    e.target.blur();
+    if (tuneSel == null) return;
+    change(() => { project.tune.splice(tuneSel, 1); tuneSel = null; });
+    showTune();
+  };
+  // Le curseur modifie le point en direct ; une seule étape d'annulation par geste
+  let tuneBefore = null;
+  const tuneGrab = () => { if (tuneBefore == null) tuneBefore = snapshot(); };
+  $('tuneSlider').addEventListener('pointerdown', tuneGrab);
+  // les flèches règlent le curseur (pas la navigation du studio)
+  $('tuneSlider').addEventListener('keydown', e => { if (/Arrow/.test(e.key)) { tuneGrab(); e.stopPropagation(); } });
+  $('tuneSlider').addEventListener('input', () => {
+    if (tuneSel == null) return;
+    project.tune[tuneSel].c = +$('tuneSlider').value;
+    $('tuneVal').textContent = fmtC(project.tune[tuneSel].c);
+  });
+  $('tuneSlider').addEventListener('change', () => {
+    if (tuneSel == null) return;
+    const after = snapshot();
+    project = JSON.parse(tuneBefore || after);
+    change(() => { project = JSON.parse(after); });
+    tuneBefore = null;
+    showTune();
+  });
+  showTune();
+  // sans point sélectionné, affiche la correction en cours à l'instant de lecture
+  setInterval(() => { if (tuneSel == null && tab === 'check') $('tuneVal').textContent = fmtC(C.tuneAt(project.tune, vTime())); }, 400);
   document.querySelectorAll('[data-off]').forEach(b => b.onclick = () => { change(() => { project.offset = r3(project.offset + +b.dataset.off); }); showOffset(); });
   $('followSeg').querySelectorAll('button').forEach(b => {
     b.classList.toggle('active', b.dataset.f === settings.follow);
@@ -711,6 +777,8 @@
 
   // Doublure au piano (vérification à l'oreille)
   let piano = null, dblLast = null, dblEvents = null;
+  const pianoDb = () => { const v = +$('pianoVol').value; return v <= 0 ? -Infinity : 20 * Math.log10(v / 80); };
+  $('pianoVol').oninput = () => { if (piano) piano.volume.value = pianoDb(); };
   $('dblVoice').onchange = async e => {
     e.target.blur();
     if (!e.target.value || piano) return;
@@ -724,6 +792,7 @@
           urls: Object.fromEntries(SAMPLES.map(n => [n.replace('s', '#'), n + '.mp3'])),
           baseUrl: 'assets/piano/', release: 1, onload: res, onerror: res,
         }).toDestination();
+        piano.volume.value = pianoDb();
         setTimeout(res, 8000);
       });
       $('status').classList.remove('show');
@@ -736,7 +805,7 @@
     if (!dblEvents || dblEvents.plan !== plan) { dblEvents = C.perfEvents(model, plan); dblEvents.plan = plan; }
     const voicesOn = sel === 'all' ? model.voices : [sel];
     doubler.tick(vTime(), video.rate(), voicesOn, v => dblEv[v] || (dblEv[v] = C.voiceEvents(dblEvents, v, vmap(v), project.offset)),
-      (e, delay, dur) => piano.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), dur, Tone.now() + delay, 0.75));
+      (e, delay, dur) => piano.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(project.tune, e.t0)), dur, Tone.now() + delay, 0.75));
   }
 
   // ======================================================================
@@ -1099,8 +1168,35 @@
     change(() => { delete project.marks[k]; });
     selKey = null; refreshSel();
   }
+  // Clic droit sur une ligne (Mesures, Paroles…, Notes…) : supprimer tous ses repères
+  const ctxMenu = document.createElement('div');
+  ctxMenu.className = 'ctx-menu'; ctxMenu.hidden = true;
+  document.body.appendChild(ctxMenu);
+  const closeCtx = () => { ctxMenu.hidden = true; };
+  addEventListener('pointerdown', e => { if (!ctxMenu.contains(e.target)) closeCtx(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeCtx(); });
+  cv.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const r = cv.getBoundingClientRect();
+    const h = hit(e.clientX - r.left, e.clientY - r.top);
+    const tr = h.tr;
+    if (!tr || !(tr.id === 'm' || tr.id.startsWith('l:') || tr.id.startsWith('n:'))) { closeCtx(); return; }
+    const keys = markerList.filter(m => trackOf(m) === tr.id).map(m => m.key);
+    ctxMenu.innerHTML = `<div class="ctx-title">${esc(tr.name)} · ${keys.length} repère${keys.length > 1 ? 's' : ''}</div>` +
+      `<button data-act="del"${keys.length ? '' : ' disabled'}>Supprimer la ligne</button>`;
+    ctxMenu.style.left = Math.min(e.clientX, innerWidth - 220) + 'px';
+    ctxMenu.style.top = Math.min(e.clientY, innerHeight - 90) + 'px';
+    ctxMenu.hidden = false;
+    ctxMenu.querySelector('[data-act="del"]').onclick = () => {
+      closeCtx();
+      change(() => { for (const k of keys) delete project.marks[k]; });
+      if (keys.includes(selKey)) { selKey = null; refreshSel(); }
+      toast(`Ligne « ${tr.name} » supprimée (${keys.length} repère${keys.length > 1 ? 's' : ''}) · Ctrl+Z pour annuler`, 3000);
+    };
+  });
   let scrubbing = false, lastScrub = 0;
   cv.addEventListener('pointerdown', e => {
+    if (e.button === 2) return;               // clic droit : menu contextuel
     const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     const h = hit(x, y);
     cv.setPointerCapture(e.pointerId);

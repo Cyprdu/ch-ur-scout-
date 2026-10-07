@@ -5,7 +5,12 @@
     "title": "En toi, ma confiance",
     "category": "Méditation et confiance",
     "authors": "Paroles (d'après le Ps 13) et musique : Chants de l'Emmanuel (J.-F. Léost)",
-    "voices": ["S", "A", "T", "B"],
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
     "tempo": {
       "bpm": 86,
       "unit": 0.25
@@ -13,12 +18,36 @@
     "structure": {
       "verses": 3,
       "couplet": {
-        "*": [[0, 14.125]]
+        "*": [
+          [
+            0,
+            14.125
+          ]
+        ]
       },
-      "between": [[14.125, 14.875]],
-      "last": [[14.875, 15.875]]
+      "between": [
+        [
+          14.125,
+          14.875
+        ]
+      ],
+      "last": [
+        [
+          14.875,
+          15.875
+        ]
+      ]
     },
-    "legacyOrder": [[0, 14.125], [14.875, 15.875]]
+    "legacyOrder": [
+      [
+        0,
+        14.125
+      ],
+      [
+        14.875,
+        15.875
+      ]
+    ]
   },
   {
     "id": "je-ne-t-ai-point-cherche",
@@ -26,7 +55,12 @@
     "title": "Je ne t'ai point cherché en vain, ô mon Seigneur",
     "category": "",
     "authors": "Paroles : fr. David Perrin, op · Musique : fr. Clément Binachon, op",
-    "voices": ["S", "A", "T", "B"],
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
     "tempo": {
       "bpm": 65,
       "unit": 0.25
@@ -34,10 +68,20 @@
     "structure": {
       "verses": 5,
       "couplet": {
-        "*": [[0, 10.5]]
+        "*": [
+          [
+            0,
+            10.5
+          ]
+        ]
       }
     },
-    "legacyOrder": [[0, 10.5]]
+    "legacyOrder": [
+      [
+        0,
+        10.5
+      ]
+    ]
   },
   {
     "id": "jhesu-maria",
@@ -45,22 +89,73 @@
     "title": "Jhesu Maria",
     "category": "",
     "authors": "Paroles : fr. David Perrin, op · Musique : fr. Clément Binachon, op",
-    "voices": ["S", "A", "T", "B"],
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
     "tempo": {
       "bpm": 56,
       "unit": 0.375
     },
     "structure": {
       "verses": 8,
-      "intro": [[0, 6]],
+      "intro": [
+        [
+          0,
+          6
+        ]
+      ],
       "couplet": {
-        "1-4": [[6, 18]],
-        "5-8": [[18, 30]]
+        "1-4": [
+          [
+            6,
+            18
+          ]
+        ],
+        "5-8": [
+          [
+            18,
+            30
+          ]
+        ]
       },
-      "between": [[0, 6]],
-      "last": [[0, 6]]
+      "between": [
+        [
+          0,
+          6
+        ]
+      ],
+      "last": [
+        [
+          0,
+          6
+        ]
+      ]
     },
-    "legacyOrder": [[0, 6], [6, 18], [0, 6], [18, 30], [0, 6]]
+    "legacyOrder": [
+      [
+        0,
+        6
+      ],
+      [
+        6,
+        18
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        18,
+        30
+      ],
+      [
+        0,
+        6
+      ]
+    ]
   },
   {
     "id": "laissez-vous-consumer",
@@ -68,21 +163,59 @@
     "title": "Laissez-vous consumer",
     "category": "Eucharistie",
     "authors": "Paroles et musique : Marc Dannaud",
-    "voices": ["S", "A", "T", "B"],
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
     "tempo": {
       "bpm": 65,
       "unit": 0.25
     },
     "structure": {
       "verses": 6,
-      "intro": [[0, 6]],
+      "intro": [
+        [
+          0,
+          6
+        ]
+      ],
       "couplet": {
-        "*": [[6, 11.5]]
+        "*": [
+          [
+            6,
+            11.5
+          ]
+        ]
       },
-      "between": [[0, 6]],
-      "last": [[0, 6]]
+      "between": [
+        [
+          0,
+          6
+        ]
+      ],
+      "last": [
+        [
+          0,
+          6
+        ]
+      ]
     },
-    "legacyOrder": [[0, 6], [6, 11.5], [0, 6]]
+    "legacyOrder": [
+      [
+        0,
+        6
+      ],
+      [
+        6,
+        11.5
+      ],
+      [
+        0,
+        6
+      ]
+    ]
   },
   {
     "id": "le-lion",
@@ -90,7 +223,13 @@
     "title": "Le lion",
     "category": "",
     "authors": "Paroles et musique : Tanguy Dionis du Séjour · Arr. J.-C. Rosaz",
-    "voices": ["Solo", "S", "A", "T", "B"],
+    "voices": [
+      "Solo",
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
     "tempo": {
       "bpm": 100,
       "unit": 0.25
@@ -101,16 +240,49 @@
         "1": "Premier passage",
         "2": "Reprise"
       },
-      "intro": [[0, 10]],
+      "intro": [
+        [
+          0,
+          10
+        ]
+      ],
       "couplet": {
-        "*": [[10, 32]]
+        "*": [
+          [
+            10,
+            32
+          ]
+        ]
       },
       "lastCouplet": {
-        "*": [[10, 31]]
+        "*": [
+          [
+            10,
+            31
+          ]
+        ]
       },
-      "outro": [[32, 63]]
+      "outro": [
+        [
+          32,
+          63
+        ]
+      ]
     },
-    "legacyOrder": [[0, 32], [10, 31], [32, 63]]
+    "legacyOrder": [
+      [
+        0,
+        32
+      ],
+      [
+        10,
+        31
+      ],
+      [
+        32,
+        63
+      ]
+    ]
   },
   {
     "id": "rappelle-toi",
@@ -118,7 +290,12 @@
     "title": "Rappelle-toi, tu es sauvé",
     "category": "",
     "authors": "Musique : Martin Szersnovicz · Texte : Fraternité de Tibériade",
-    "voices": ["S", "A", "T", "B"],
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
     "tempo": {
       "bpm": 84,
       "unit": 0.25
@@ -126,9 +303,170 @@
     "structure": {
       "verses": 7,
       "couplet": {
-        "*": [[0, 12.875]]
+        "*": [
+          [
+            0,
+            12.875
+          ]
+        ]
       }
     },
-    "legacyOrder": [[0, 12.875]]
+    "legacyOrder": [
+      [
+        0,
+        12.875
+      ]
+    ]
+  },
+  {
+    "id": "glorificamus-te",
+    "file": "glorificamus",
+    "title": "Glorificamus te",
+    "category": "Esprit Saint",
+    "authors": "Paroles et musique : Benjamin Pavageau · © 2010, Éditions de l'Emmanuel",
+    "voices": [
+      "S",
+      "S2",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 108,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 3,
+      "couplet": {
+        "*": [
+          [
+            0,
+            16
+          ]
+        ]
+      },
+      "between": [
+        [
+          16,
+          24
+        ]
+      ],
+      "last": [
+        [
+          16,
+          24
+        ]
+      ],
+      "outro": [
+        [
+          24,
+          49
+        ]
+      ]
+    },
+    "legacyOrder": [
+      [
+        0,
+        49
+      ]
+    ]
+  },
+  {
+    "id": "seigneur-o-maitre-souverain",
+    "file": "seigneur",
+    "title": "Seigneur, ô Maître souverain",
+    "category": "Hymnes et cantiques",
+    "authors": "Paroles d'après Lc 2, 29-32 et musique : Communauté de l'Emmanuel (M. Wittal) · © 1991 Gemeinschaft Emmanuel, trad. © 2012 Éditions de l'Emmanuel",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 72,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 2,
+      "intro": [
+        [
+          0,
+          9
+        ]
+      ],
+      "couplet": {
+        "*": [
+          [
+            9,
+            17
+          ]
+        ]
+      },
+      "between": [
+        [
+          0,
+          9
+        ]
+      ],
+      "last": [
+        [
+          0,
+          9
+        ]
+      ]
+    },
+    "legacyOrder": [
+      [
+        0,
+        17
+      ]
+    ]
+  },
+  {
+    "id": "dirige-moi-par-ta-verite",
+    "file": "dirige",
+    "title": "Dirige-moi par Ta vérité",
+    "category": "",
+    "authors": "Texte d'après le Psaume 24 · Musique : Thibault Fromant (Ad Dei Gloriam)",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 102,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 3,
+      "couplet": {
+        "*": [
+          [
+            0,
+            15.875
+          ]
+        ]
+      },
+      "between": [
+        [
+          15.875,
+          32.125
+        ]
+      ],
+      "last": [
+        [
+          15.875,
+          32.125
+        ]
+      ]
+    },
+    "legacyOrder": [
+      [
+        0,
+        32.125
+      ]
+    ]
   }
 ]

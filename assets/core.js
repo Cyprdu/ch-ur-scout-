@@ -4,7 +4,7 @@
 window.Chorale = (() => {
   const EPS = 1e-6;
   const NS = 'http://www.w3.org/2000/svg';
-  const VOICE_NAMES = { S: 'Soprano', A: 'Alto', T: 'Ténor', B: 'Basse', Solo: 'Solo' };
+  const VOICE_NAMES = { S: 'Soprano', S2: 'Soprano 2', A: 'Alto', T: 'Ténor', B: 'Basse', Solo: 'Solo' };
   const VERSE_COLORS = ['#c8231f', '#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#65a30d'];
   const verseColor = v => VERSE_COLORS[((v || 1) - 1) % VERSE_COLORS.length];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -393,6 +393,20 @@ window.Chorale = (() => {
     return timeMap(points.filter(p => p.kind !== 'n' || p.voice === voice), TOTAL);
   }
 
+  /** Correction de justesse (cents) à l'instant t de l'enregistrement : interpolation linéaire
+   *  entre les points clés [{t, c}], constante avant le premier et après le dernier. */
+  function tuneAt(tune, t) {
+    if (!tune || !tune.length) return 0;
+    const k = [...tune].sort((a, b) => a.t - b.t);
+    if (t <= k[0].t) return k[0].c;
+    for (let i = 1; i < k.length; i++) {
+      if (t <= k[i].t) return k[i - 1].c + (k[i].c - k[i - 1].c) * (t - k[i - 1].t) / (k[i].t - k[i - 1].t || 1);
+    }
+    return k[k.length - 1].c;
+  }
+  /** Fréquence d'une note MIDI corrigée de c cents. */
+  const tunedFreq = (midi, c) => 440 * Math.pow(2, (midi - 69) / 12 + (c || 0) / 1200);
+
   /** Notes d'une voix avec leurs instants dans l'enregistrement (t0, t1), d'après la correspondance de cette voix. */
   function voiceEvents(events, voice, map, offset = 0) {
     return events.filter(e => e.n.v === voice).map(e => {
@@ -757,7 +771,7 @@ window.Chorale = (() => {
   return {
     EPS, NS, VOICE_NAMES, verseColor, esc, fmt, fmtBeats,
     generateOrder, mergeOrder, defaultOrder, versesOfOrder, allVerses, makePlan,
-    mountScore, measureSteps, lyricUnits, noteUnits, noteName, timeMap, voiceTimeMap, voiceEvents, doubler, youtube, audioFile, loadYouTubeApi,
+    mountScore, measureSteps, lyricUnits, noteUnits, noteName, timeMap, voiceTimeMap, voiceEvents, tuneAt, tunedFreq, doubler, youtube, audioFile, loadYouTubeApi,
     structureEditor, structureConfig, orderFromConfig, loadScript, store, toaster, perfEvents, normalizeSync,
   };
 })();

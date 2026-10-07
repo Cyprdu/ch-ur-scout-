@@ -17,8 +17,14 @@ MAESTRO = {
     0x2211: ('rest', 1), 0xD3: ('rest', 2), 0x2248: ('rest', 16),
     0x26: ('clef', 'G'), 0x3F: ('clef', 'F'), 0x56: ('clef', 'g'), 0x55: ('ferm', 0),
 }
-FONTS = {'MScore': SMUFL, 'Leland': SMUFL, 'Maestro': MAESTRO, 'Petrucci': MAESTRO}
-MUSIC_FONTS = set(FONTS) | {'MScoreText', 'BravuraText'}
+# MuseScore 2 (police « MScoreRegular », codes privés)
+MSCORE2 = {
+    0xE12D: ('head', 4), 0xE12C: ('head', 2), 0xE12B: ('head', 1), 0xE127: ('dot', 0),
+    0xE114: ('acc', 'b'), 0xE11D: ('acc', 'n'), 0xE11E: ('acc', '#'),
+    0xE19E: ('clef', 'G'), 0xE19C: ('clef', 'F'),
+}
+FONTS = {'MScoreRegular': MSCORE2, 'MScore': SMUFL, 'Leland': SMUFL, 'Maestro': MAESTRO, 'Petrucci': MAESTRO}
+MUSIC_FONTS = set(FONTS) | {'MScoreText', 'MScoreTextRegular', 'BravuraText'}
 NAMES = 'CDEFGAB'
 
 

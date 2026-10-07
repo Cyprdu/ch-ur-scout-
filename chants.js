@@ -323,5 +323,159 @@ window.CHANTS = [
   ],
   "video": true,
   "nPages": 1
+ },
+ {
+  "id": "glorificamus-te",
+  "title": "Glorificamus te",
+  "category": "Esprit Saint",
+  "authors": "Paroles et musique : Benjamin Pavageau · © 2010, Éditions de l'Emmanuel",
+  "voices": [
+   "S",
+   "S2",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 108,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 3,
+   "couplet": {
+    "*": [
+     [
+      0,
+      16
+     ]
+    ]
+   },
+   "between": [
+    [
+     16,
+     24
+    ]
+   ],
+   "last": [
+    [
+     16,
+     24
+    ]
+   ],
+   "outro": [
+    [
+     24,
+     49
+    ]
+   ]
+  },
+  "legacyOrder": [
+   [
+    0,
+    49
+   ]
+  ],
+  "video": true,
+  "nPages": 4
+ },
+ {
+  "id": "seigneur-o-maitre-souverain",
+  "title": "Seigneur, ô Maître souverain",
+  "category": "Hymnes et cantiques",
+  "authors": "Paroles d'après Lc 2, 29-32 et musique : Communauté de l'Emmanuel (M. Wittal) · © 1991 Gemeinschaft Emmanuel, trad. © 2012 Éditions de l'Emmanuel",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 72,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 2,
+   "intro": [
+    [
+     0,
+     9
+    ]
+   ],
+   "couplet": {
+    "*": [
+     [
+      9,
+      17
+     ]
+    ]
+   },
+   "between": [
+    [
+     0,
+     9
+    ]
+   ],
+   "last": [
+    [
+     0,
+     9
+    ]
+   ]
+  },
+  "legacyOrder": [
+   [
+    0,
+    17
+   ]
+  ],
+  "video": true,
+  "nPages": 2
+ },
+ {
+  "id": "dirige-moi-par-ta-verite",
+  "title": "Dirige-moi par Ta vérité",
+  "category": "",
+  "authors": "Texte d'après le Psaume 24 · Musique : Thibault Fromant (Ad Dei Gloriam)",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 102,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 3,
+   "couplet": {
+    "*": [
+     [
+      0,
+      15.875
+     ]
+    ]
+   },
+   "between": [
+    [
+     15.875,
+     32.125
+    ]
+   ],
+   "last": [
+    [
+     15.875,
+     32.125
+    ]
+   ]
+  },
+  "legacyOrder": [
+   [
+    0,
+    32.125
+   ]
+  ],
+  "video": true,
+  "nPages": 3
  }
 ];

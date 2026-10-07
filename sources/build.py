@@ -44,7 +44,7 @@ def prefix_ids(svg, pfx):
     return svg
 
 
-def note_overlay(pdf_page, svg):
+def note_overlay(pdf_page, svg, ties=frozenset()):
     """Notes du lecteur : un <use> par tête de note, copie exacte du glyphe affiché.
 
     Les liens « http://n/?… » du PDF annoté donnent la note (voix, temps, hauteur…)
@@ -64,6 +64,8 @@ def note_overlay(pdf_page, svg):
             raise SystemExit(f'tête de note introuvable dans le SVG : {uri} {r}')
         _, g, x, y = min(cand)
         attrs = dict(kv.split('=', 1) for kv in uri[len('http://n/?'):].split('&'))
+        if (attrs.get('v'), attrs.get('t'), attrs.get('p')) in ties:
+            attrs['tie'] = '1'
         data = ' '.join(f'data-{k}="{v}"' for k, v in attrs.items())
         out.append(f'<use class="nh" {data} xlink:href="#{g}" x="{x}" y="{y}"/>')
     return out
@@ -160,11 +162,14 @@ def build_song(song):
     total = 0
     nly = 0
     vmap = voice_map(src)
+    # Liaisons de prolongation (liens « http://t/?… » sur les traits), toutes pages confondues
+    ties = {(q['v'], q['t'], q['p']) for pg in doc for l in pg.get_links()
+            if (l.get('uri') or '').startswith('http://t/?') for q in [parse_uri(l['uri'], 'http://t/?')]}
     for i, c in enumerate(disp):
         sc = open(c, encoding='utf-8').read()
         sc = sc[sc.index('<svg'):]
         sc = prefix_ids(sc, f'{sid}{i}-')
-        notes = note_overlay(doc[i], sc)
+        notes = note_overlay(doc[i], sc, ties)
         lyr, bad = lyric_overlay(doc[i], sc, vmap, mel if i == 0 else set())
         if bad:
             print(f'  ! page {i + 1} : glyphes de syllabes douteux : ' + ', '.join(bad[:12]))

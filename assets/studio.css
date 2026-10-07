@@ -174,3 +174,16 @@ body.no-project .s-video { aspect-ratio: auto; height: 100%; max-height: none; b
 body.no-project .s-video .msg { color: var(--muted); }
 body.no-project .s-video .shield { display: none; }
 .srv-warn { font-size: 12px; color: #b45309; background: color-mix(in srgb, #f59e0b 14%, var(--surface)); border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent); border-radius: 6px; padding: 4px 8px; white-space: nowrap; cursor: help; }
+
+/* Justesse du piano */
+.tune-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tune-pt { border: 1px solid var(--line-strong); background: transparent; border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tune-pt.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Menu contextuel de la frise */
+.ctx-menu { position: fixed; z-index: 1000; min-width: 200px; background: var(--surface, #fff); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 6px; display: grid; gap: 2px; font-size: 13px; }
+.ctx-menu[hidden] { display: none; }
+.ctx-menu .ctx-title { padding: 4px 8px 6px; color: var(--muted); font-size: 12px; }
+.ctx-menu button { text-align: left; border: 0; background: transparent; color: #c0392b; padding: 7px 8px; border-radius: 6px; cursor: pointer; font: inherit; }
+.ctx-menu button:hover:not(:disabled) { background: var(--bg); }
+.ctx-menu button:disabled { color: var(--muted); cursor: default; }

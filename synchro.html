@@ -119,6 +119,20 @@
           <div class="stepper"><button data-off="-0.05">−</button><span id="offVal">0,00 s</span><button data-off="0.05">+</button></div>
         </div>
         <div class="box">
+          <h4>Piano par-dessus l'enregistrement</h4>
+          <div class="row2"><span>Voix jouées au piano</span><select class="select" id="dblVoice"><option value="">Aucune</option><option value="all">Toutes les voix</option></select></div>
+          <div class="row2"><span>Volume du piano</span><input type="range" id="pianoVol" min="0" max="100" value="80"></div>
+          <div class="row2"><span>Volume de l'enregistrement</span><input type="range" id="vol2" min="0" max="100" value="100"></div>
+        </div>
+        <div class="box">
+          <h4>Justesse du piano</h4>
+          <p class="hint" style="margin:0">Si la chorale baisse au fil du chant, placez un point clé là où elle est encore juste, puis un autre là où elle a baissé, et réglez-le au curseur à l'oreille : entre deux points, le piano glisse progressivement.</p>
+          <div class="row2"><span>Correction</span><span id="tuneVal" style="font-variant-numeric:tabular-nums">0 cents</span></div>
+          <input type="range" id="tuneSlider" min="-100" max="100" step="1" value="0" disabled style="width:100%">
+          <div class="row2"><button class="btn" id="tuneAdd">+ Point clé ici</button><button class="btn" id="tuneDel" disabled>Supprimer le point</button></div>
+          <div class="tune-list" id="tuneList"></div>
+        </div>
+        <div class="box">
           <h4>Passages</h4>
           <div class="pass-list" id="passList"></div>
         </div>
@@ -138,7 +152,6 @@
         <div class="box">
           <h4>Affichage</h4>
           <div class="row2"><span>Paroles en rouge</span><select class="select" id="lyrHl"></select></div>
-          <div class="row2"><span>Doubler au piano</span><select class="select" id="dblVoice"><option value="">Non</option><option value="all">Toutes les voix</option></select></div>
           <div class="row2"><span>Volume de la vidéo</span><input type="range" id="vol" min="0" max="100" value="100"></div>
         </div>
         <div class="box">
