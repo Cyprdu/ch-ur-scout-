@@ -1,0 +1,11 @@
+# Fichiers du dépôt qui ne font pas partie du site publié
+.git
+.gitignore
+.assetsignore
+.nojekyll
+.wrangler
+node_modules
+wrangler.jsonc
+README.md
+serveur-local.bat
+sources
