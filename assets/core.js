@@ -420,7 +420,7 @@ window.Chorale = (() => {
     return {
       reset() { until = null; },
       tick(v, rate, voices, eventsOf, trigger) {
-        if (until == null || v < until - 0.3 || v > until + 1.5) until = v;   // saut dans l'audio
+        if (until == null || v < until - lookahead * rate - 0.3 || v > until + 1.5) until = v;   // saut dans l'audio
         const horizon = v + lookahead * rate;
         if (horizon <= until) return;
         for (const vc of voices) for (const e of eventsOf(vc)) {
@@ -541,6 +541,120 @@ window.Chorale = (() => {
     p.volume = v => { if (p.ready && v != null) yt.setVolume(v); return p.ready ? yt.getVolume() : 100; };
     return p;
   }
+
+  /** Enregistrement joué par Web Audio, sur la même horloge que le piano : les notes doublées sont
+   *  programmées à l'échantillon près, quel que soit l'appareil. Même interface que audioFile(),
+   *  plus posAt(t) : position dans l'enregistrement à l'instant t de l'horloge audio. */
+  function bufferAudio(url, ctx, { onState, onError } = {}) {
+    const p = { ready: false, state: -1, buffer: null };
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    let src = null, t0 = 0, off = 0;   // en lecture : position = off + (horloge - t0)
+    const set = st => { p.state = st; if (onState) onState(st); };
+    const lat = () => ctx.outputLatency || ctx.baseLatency || 0;
+    // Décodé en mono 32 kHz : 3 fois moins de mémoire qu'en stéréo 48 kHz (vieux téléphones)
+    const decode = ab => new Promise((res, rej) => {
+      const O = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      let dc;
+      try { dc = new O(1, 1, 32000); } catch (e) { dc = ctx; }
+      dc.decodeAudioData(ab, res, rej);
+    }).then(b => {
+      const m = ctx.createBuffer(1, b.length, b.sampleRate), d = m.getChannelData(0);
+      for (let c = 0; c < b.numberOfChannels; c++) {
+        const x = b.getChannelData(c);
+        for (let i = 0; i < d.length; i++) d[i] += x[i] / b.numberOfChannels;
+      }
+      return m;
+    });
+    p.whenReady = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(decode).then(b => { p.buffer = b; p.ready = true; return p; })
+      .catch(e => { if (onError) onError(e); return p; });
+    const clamp = t => Math.max(0, Math.min(t, p.duration()));
+    const stop = () => { const s = src; src = null; s.onended = null; try { s.stop(); } catch (e) {} };
+    p.posAt = t => (src ? off + (t - t0) : off);
+    p.playing = () => !!src;
+    p.time = () => clamp(p.posAt(ctx.currentTime - lat()));   // ce qui sort du haut-parleur
+    p.duration = () => (p.buffer ? p.buffer.duration : 0);
+    p.play = () => {
+      if (!p.buffer || src) return;
+      if (ctx.state !== 'running') ctx.resume();
+      if (off >= p.duration() - 0.01) off = 0;
+      const s = src = ctx.createBufferSource();
+      s.buffer = p.buffer; s.connect(gain);
+      t0 = ctx.currentTime + 0.05;
+      s.start(t0, off);
+      s.onended = () => { if (src === s) { src = null; off = p.duration(); set(0); } };
+      set(1);
+    };
+    p.pause = () => { if (!src) return; off = clamp(p.posAt(ctx.currentTime)); stop(); set(2); };
+    p.seek = t => { const was = !!src; if (was) stop(); off = clamp(t); if (was) p.play(); };
+    p.rate = () => 1;
+    p.volume = v => { if (v != null) gain.gain.value = v / 100; return gain.gain.value * 100; };
+    return p;
+  }
+
+  /** iPhone / iPad : sans ça, le bouton « silencieux » coupe tout le son Web Audio. */
+  function iosPlayback() {
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'playback'; } catch (e) {} return; }
+    if (!/iP(hone|ad|od)/.test(navigator.userAgent) && !(/Mac/.test(navigator.userAgent) && 'ontouchend' in document)) return;
+    // Anciennes versions : un son HTML muet en boucle fait passer la page en mode « lecture »
+    const n = 4000, b = new DataView(new ArrayBuffer(44 + n));
+    const str = (o, s) => [...s].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+    str(0, 'RIFF'); b.setUint32(4, 36 + n, true); str(8, 'WAVEfmt '); b.setUint32(16, 16, true);
+    b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, 8000, true); b.setUint32(28, 8000, true);
+    b.setUint16(32, 1, true); b.setUint16(34, 8, true); str(36, 'data'); b.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) b.setUint8(44 + i, 128);
+    const a = new Audio(URL.createObjectURL(new Blob([b], { type: 'audio/wav' })));
+    a.loop = true; a.setAttribute('playsinline', '');
+    const go = () => a.play().then(() => ['touchend', 'click'].forEach(e => removeEventListener(e, go, true))).catch(() => {});
+    ['touchend', 'click'].forEach(e => addEventListener(e, go, true));
+  }
+  iosPlayback();
+
+  /** Listes déroulantes sur écran tactile : menu dessiné par la page au lieu du sélecteur natif
+   *  (celui d'iOS fait planter Safari sur ces pages chargées). */
+  function touchSelects() {
+    if (!matchMedia('(pointer: coarse)').matches) return;
+    let menu = null;
+    const close = () => { if (menu) { menu.remove(); menu = null; } };
+    const open = sel => {
+      close();
+      menu = document.createElement('div');
+      menu.className = 'tmenu';
+      [...sel.options].forEach(o => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = o.textContent; b.disabled = o.disabled;
+        if (o.selected) b.className = 'sel';
+        b.onclick = e => {
+          e.stopPropagation(); close();
+          if (sel.value === o.value) return;
+          sel.value = o.value;
+          sel.dispatchEvent(new Event('input', { bubbles: true }));
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        menu.appendChild(b);
+      });
+      (sel.closest('dialog') || document.body).appendChild(menu);
+      const r = sel.getBoundingClientRect(), h = menu.offsetHeight, w = Math.max(r.width, menu.offsetWidth);
+      menu.style.left = `${Math.max(8, Math.min(r.left, innerWidth - w - 8))}px`;
+      menu.style.minWidth = `${r.width}px`;
+      menu.style.top = `${r.bottom + 4 + h < innerHeight ? r.bottom + 4 : Math.max(8, r.top - 4 - h)}px`;
+      const cur = menu.querySelector('.sel');
+      if (cur) menu.scrollTop = cur.offsetTop - menu.clientHeight / 2;
+    };
+    const grab = e => {
+      if (menu && menu.contains(e.target)) return;
+      close();
+      const sel = e.target.closest && e.target.closest('select');
+      if (!sel || sel.disabled || sel.multiple) return;
+      e.preventDefault();   // pas de sélecteur natif
+      open(sel);
+    };
+    addEventListener('touchstart', grab, { capture: true, passive: false });
+    addEventListener('mousedown', grab, true);
+    addEventListener('scroll', e => { if (menu && !menu.contains(e.target)) close(); }, true);
+  }
+  touchSelects();
 
   /** Lecteur d'un fichier audio (copie MP3 de l'enregistrement), même interface que youtube(). */
   function audioFile(url, { onState, onError } = {}) {
@@ -772,6 +886,6 @@ window.Chorale = (() => {
     EPS, NS, VOICE_NAMES, verseColor, esc, fmt, fmtBeats,
     generateOrder, mergeOrder, defaultOrder, versesOfOrder, allVerses, makePlan,
     mountScore, measureSteps, lyricUnits, noteUnits, noteName, timeMap, voiceTimeMap, voiceEvents, tuneAt, tunedFreq, doubler, youtube, audioFile, loadYouTubeApi,
-    structureEditor, structureConfig, orderFromConfig, loadScript, store, toaster, perfEvents, normalizeSync,
+    structureEditor, structureConfig, orderFromConfig, loadScript, bufferAudio, store, toaster, perfEvents, normalizeSync,
   };
 })();

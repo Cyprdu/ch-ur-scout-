@@ -22,7 +22,7 @@
   $('title').textContent = meta.title;
   $('authors').textContent = meta.authors || '';
   $('pdfBtn').href = `chants/${id}/${id}.pdf`;
-  $('pdfBtn').innerHTML = icon('download') + '<span class="lbl">Partition PDF</span>';
+  $('pdfBtn').innerHTML = icon('file') + '<span class="lbl">Partition PDF</span>';
 
   // Enregistrement original : uniquement si chants/<id>/synchro.json existe (site hébergé)
   const syncLoad = location.protocol === 'file:' || meta.video === false ? Promise.resolve(null)
@@ -111,6 +111,11 @@
   const velOf = (v, choir) => (v === 'S' || v === 'Solo' ? (choir ? 0.75 : 0.72) : (choir ? 0.65 : 0.6)) * level[v] / 100;
   const instrument = () => (instr.value === 'piano' && pianoReady ? piano : organ);
 
+  // Notes programmées 0,3 s à l'avance sur l'horloge audio : un appareil lent ou occupé
+  // (téléphone, tablette) ne les décale plus
+  Tone.context.lookAhead = 0.3;
+  // Piano par-dessus l'enregistrement : retard fixe sur lequel les synchros ont été réglées à l'oreille
+  const PIANO_LAG = 0.1;
   const T = Tone.Transport;
   function schedule(from) {
     T.stop(); T.cancel(); T.seconds = 0;
@@ -157,7 +162,7 @@
     if (!video) {
       // Copie MP3 de l'enregistrement si elle existe (le site ne dépend alors pas de YouTube)
       const make = sync.audio
-        ? (opts) => C.audioFile(`chants/${id}/${sync.audio}`, opts)
+        ? (opts) => C.bufferAudio(`chants/${id}/${sync.audio}`, Tone.context.rawContext, opts)
         : (opts) => C.youtube('yt', sync.video, opts);
       video = make({
         onState: st => {
@@ -173,8 +178,12 @@
     }
     return video.whenReady;
   }
-  const doubler = C.doubler();
-  const seekVideo = P => { if (video && video.ready) { video.seek(P <= EPS ? 0 : tmap.pToV(P) - vOffset); doubler.reset(); } };
+  const doubler = C.doubler(0.5);
+  const seekVideo = P => {
+    if (!video || !video.ready) return;
+    video.seek(P <= EPS ? 0 : tmap.pToV(P) - vOffset);
+    doubler.reset(); piano.releaseAll(); organ.releaseAll();
+  };
   // Piano par-dessus l'enregistrement : chaque voix suit ses propres repères (notes tapées
   // dans le studio), à défaut ceux des paroles et des mesures
   let dblEvents = [];
@@ -186,8 +195,10 @@
     const on = voices.filter(dblOn);
     if (!on.length || !playing || !video || !video.ready) { doubler.reset(); return; }
     const inst = pianoReady ? piano : organ;
-    doubler.tick(video.time(), video.rate(), on, v => vevents[v] || (vevents[v] = C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)),
-      (e, delay, dur) => inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), dur, Tone.now() + delay,
+    // Enregistrement en Web Audio : même horloge que le piano, calage exact (YouTube : approché)
+    const now = Tone.immediate(), exact = !!video.posAt;
+    doubler.tick(exact ? video.posAt(now) : video.time(), video.rate(), on, v => vevents[v] || (vevents[v] = C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)),
+      (e, delay, dur) => inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), dur, (exact ? now + PIANO_LAG : Tone.now()) + delay,
         velOf(e.n.v, true)));
   }
 
@@ -556,7 +567,7 @@
     const choir = source === 'video';
     const organOn = !choir && instr.value === 'organ';
     const on = voices.filter(v => voiceOn(v) && level[v] > 0);
-    const spw = secPerWhole(), lag = Tone.context.lookAhead;
+    const spw = secPerWhole(), lag = PIANO_LAG;
     let rec = null;
     if (choir) { progress('Chargement de l’enregistrement…'); rec = await Tone.ToneAudioBuffer.fromUrl(`chants/${id}/${sync.audio}`); }
     const dur = choir ? rec.duration : plan.TOTAL * spw + 3;
@@ -570,8 +581,6 @@
       await Promise.all([rv.ready, Tone.loaded()]);
       if (choir) {
         new Tone.Player(rec).connect(new Tone.Gain(mix.rec / 100).toDestination()).start(0);
-        // En direct, le piano part à Tone.now() + délai, soit « lookAhead » après l'instant calculé :
-        // c'est ce décalage qu'on entend (et sur lequel la synchro a été réglée à l'oreille)
         for (const v of on) for (const e of C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)) {
           if (e.t0 < 0 || e.t0 > dur) continue;
           inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), Math.max(0.08, e.t1 - e.t0 - 0.03), e.t0 + lag, velOf(v, true));

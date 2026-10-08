@@ -403,6 +403,18 @@ body.video-mode .voice:not(.muted) { border-color: var(--red); background: var(-
   body.video-mode .settings .select { display: none; }
 }
 
+/* ---------- Listes sur écran tactile (remplacent le sélecteur natif) ---------- */
+.tmenu {
+  position: fixed; z-index: 1000; max-height: min(60vh, 420px); overflow: auto; -webkit-overflow-scrolling: touch;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+  padding: 4px; display: flex; flex-direction: column; max-width: calc(100vw - 16px);
+}
+.tmenu button { text-align: left; border: 0; background: none; padding: 11px 14px; border-radius: 7px; font-size: 15px; color: var(--ink); white-space: nowrap; }
+.tmenu button.sel { background: var(--red-soft); color: var(--red-ink); font-weight: 600; }
+.tmenu button:disabled { color: var(--muted); }
+/* Téléphones : pas de flou sous l'en-tête (coûteux en mémoire sur une partition aussi grande) */
+@media (max-width: 600px) { .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); } }
+
 /* ---------- Télécharger l'audio ---------- */
 .dl-dialog {
   width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
