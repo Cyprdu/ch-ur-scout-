@@ -179,7 +179,7 @@ button { font: inherit; color: inherit; }
 .play:hover { background: var(--red-ink); }
 .play:active { transform: scale(.96); }
 .play .icon { width: 20px; height: 20px; }
-.time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); min-width: 92px; padding-left: 8px; }
+.time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); min-width: 92px; padding-left: 8px; flex: none; }
 .time b { color: var(--ink); font-weight: 600; }
 
 .voices { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
@@ -228,7 +228,7 @@ button { font: inherit; color: inherit; }
 @media (max-width: 1240px) {
   .dock-inner { grid-template-columns: auto 1fr; }
   .voices { grid-column: 1 / -1; order: 3; justify-content: flex-start; }
-  .settings { justify-self: end; }
+  .settings { justify-self: end; flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
 }
 @media (max-width: 600px) {
   .topbar-inner { padding: 8px 12px; gap: 8px; }
@@ -400,7 +400,6 @@ body.video-mode .voice:not(.muted) { border-color: var(--red); background: var(-
 }
 @media (max-width: 600px) {
   .mixer input { width: 74px; }
-  body.video-mode .settings .select { display: none; }
 }
 
 /* ---------- Listes sur écran tactile (remplacent le sélecteur natif) ---------- */

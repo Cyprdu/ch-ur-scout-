@@ -509,7 +509,6 @@
     o.value = 'video'; o.textContent = 'Chœur';
     instr.prepend(o);
     instr.value = 'piano';
-    $('choirCard').hidden = false;
     $('ccIcon').innerHTML = icon('headphones');
     videoBtn.innerHTML = icon('headphones') + '<span>Écouter le chœur</span>';
     videoBtn.onclick = () => {
