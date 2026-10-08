@@ -556,7 +556,7 @@
     const choir = source === 'video';
     const organOn = !choir && instr.value === 'organ';
     const on = voices.filter(v => voiceOn(v) && level[v] > 0);
-    const spw = secPerWhole();
+    const spw = secPerWhole(), lag = Tone.context.lookAhead;
     let rec = null;
     if (choir) { progress('Chargement de l’enregistrement…'); rec = await Tone.ToneAudioBuffer.fromUrl(`chants/${id}/${sync.audio}`); }
     const dur = choir ? rec.duration : plan.TOTAL * spw + 3;
@@ -570,9 +570,11 @@
       await Promise.all([rv.ready, Tone.loaded()]);
       if (choir) {
         new Tone.Player(rec).connect(new Tone.Gain(mix.rec / 100).toDestination()).start(0);
+        // En direct, le piano part à Tone.now() + délai, soit « lookAhead » après l'instant calculé :
+        // c'est ce décalage qu'on entend (et sur lequel la synchro a été réglée à l'oreille)
         for (const v of on) for (const e of C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)) {
           if (e.t0 < 0 || e.t0 > dur) continue;
-          inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), Math.max(0.08, e.t1 - e.t0 - 0.03), e.t0, velOf(v, true));
+          inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), Math.max(0.08, e.t1 - e.t0 - 0.03), e.t0 + lag, velOf(v, true));
         }
       } else {
         for (const e of C.perfEvents(model, plan)) {
