@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=11">
+<link rel="stylesheet" href="assets/style.css?v=12">
 </head>
 <body>
 <header class="topbar">
@@ -19,6 +19,7 @@
       <span class="brand-text"><strong>Chorale Scouts d'Europe</strong><span>Lyon 2026</span></span>
     </a>
     <span class="spacer"></span>
+    <button class="btn" id="dlBtn" title="Télécharger l'audio avec vos réglages" hidden></button>
     <a class="btn" id="pdfBtn" download></a>
   </div>
 </header>
@@ -88,12 +89,19 @@
     </div>
   </div>
 </div>
+<dialog class="dl-dialog" id="dlDlg">
+  <div class="pop-head"><strong>Télécharger l’audio</strong><button class="icon-btn sm" id="dlClose" aria-label="Fermer">✕</button></div>
+  <p class="dl-hint">Réglez le son et le volume de chaque voix, écoutez, puis téléchargez : le fichier MP3 reprend ces réglages, ainsi que le tempo et les couplets choisis.</p>
+  <div class="pop-row"><span>Son</span><select class="select" id="dlSrc"></select></div>
+  <div id="dlRows"></div>
+  <div class="dl-actions"><button class="btn" id="dlPlay"></button><button class="btn primary" id="dlGo"></button></div>
+</dialog>
 <div class="status" id="status"></div>
 
 <script src="assets/icons.js?v=5"></script>
 <script>/* liste des chants toujours à jour (elle change à chaque publication) */document.write('<script src="chants.js?' + Date.now() + '"><\/script>')</script>
 <script src="assets/tone.js"></script>
 <script src="assets/core.js?v=14"></script>
-<script src="assets/player.js?v=11"></script>
+<script src="assets/player.js?v=12"></script>
 </body>
 </html>

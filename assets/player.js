@@ -84,23 +84,31 @@
   let pianoReady = false, pianoDone;
   const pianoLoaded = new Promise(r => (pianoDone = r));
   const SAMPLES = ['A1', 'C2', 'Ds2', 'Fs2', 'A2', 'C3', 'Ds3', 'Fs3', 'A3', 'C4', 'Ds4', 'Fs4', 'A4', 'C5', 'Ds5', 'Fs5', 'A5', 'C6'];
-  const piano = new Tone.Sampler({
+  const PIANO = {
     urls: Object.fromEntries(SAMPLES.map(n => [n.replace('s', '#'), n + '.mp3'])),
     baseUrl: location.protocol === 'file:' ? 'https://tonejs.github.io/audio/salamander/' : 'assets/piano/',
     release: 1,
-    onload: () => { pianoReady = true; pianoDone(); },
-    onerror: () => pianoDone(),
-  }).connect(reverb);
-  const organ = new Tone.PolySynth(Tone.Synth, {
+  };
+  const ORGAN = {
     oscillator: { type: 'custom', partials: [1, 0.5, 0.28, 0.16, 0.08, 0.04] },
     envelope: { attack: 0.05, decay: 0.1, sustain: 0.85, release: 0.25 },
     volume: -15,
+  };
+  const piano = new Tone.Sampler({
+    ...PIANO,
+    onload: () => { pianoReady = true; pianoDone(); },
+    onerror: () => pianoDone(),
   }).connect(reverb);
+  const organ = new Tone.PolySynth(Tone.Synth, ORGAN).connect(reverb);
   organ.maxPolyphony = 48;
   const click = new Tone.Synth({
     oscillator: { type: 'triangle' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 }, volume: -8,
   }).connect(out);
   const instr = $('instr');
+  // Volume propre à chaque voix (fenêtre « Télécharger l'audio »), mémorisé par chant
+  const LKEY = `chorale.levels.${id}`;
+  const level = Object.assign(Object.fromEntries(voices.map(v => [v, 100])), store.get(LKEY) || {});
+  const velOf = (v, choir) => (v === 'S' || v === 'Solo' ? (choir ? 0.75 : 0.72) : (choir ? 0.65 : 0.6)) * level[v] / 100;
   const instrument = () => (instr.value === 'piano' && pianoReady ? piano : organ);
 
   const T = Tone.Transport;
@@ -113,7 +121,7 @@
       if (!audible(e.n.v) || e.P < from - EPS) continue;
       const f = Tone.Frequency(e.n.p, 'midi').toFrequency();
       const dur = Math.max(0.06, e.dP * spw - 0.03);
-      const vel = e.n.v === 'S' || e.n.v === 'Solo' ? 0.72 : 0.6;
+      const vel = velOf(e.n.v);
       T.schedule(time => inst.triggerAttackRelease(f, dur, time, vel), (e.P - from) * spw);
     }
     if (metro) {
@@ -180,7 +188,7 @@
     const inst = pianoReady ? piano : organ;
     doubler.tick(video.time(), video.rate(), on, v => vevents[v] || (vevents[v] = C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)),
       (e, delay, dur) => inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), dur, Tone.now() + delay,
-        e.n.v === 'S' || e.n.v === 'Solo' ? 0.75 : 0.65));
+        velOf(e.n.v, true)));
   }
 
   // ---------- Mixage enregistrement / piano ----------
@@ -505,6 +513,116 @@
     if (src !== source) setSource(src);
     else if (playing) seek(pos);
   };
+
+  // ---------- Télécharger l'audio (avec les réglages) ----------
+  const dlg = $('dlDlg'), dlSrc = $('dlSrc'), dlRows = $('dlRows'), dlGo = $('dlGo'), dlPlay = $('dlPlay');
+  const canChoir = hasVideo && !!sync.audio;
+  const voiceOn = v => (source === 'video' ? dblOn(v) : audible(v));
+  const slider = (key, label, val, on) => `<div class="dl-row${on === false ? ' off' : ''}" data-k="${key}">` +
+    `<label>${on == null ? '' : `<input type="checkbox"${on ? ' checked' : ''}>`}${label}</label>` +
+    `<input type="range" min="0" max="100" value="${val}" aria-label="Volume : ${label}"><output>${val}</output></div>`;
+  function dlRender() {
+    dlSrc.innerHTML = [...instr.options].filter(o => o.value !== 'video' || canChoir)
+      .map(o => `<option value="${o.value}">${o.value === 'video' ? 'Chœur (enregistrement) + piano' : o.textContent + ' seul'}</option>`).join('');
+    dlSrc.value = instr.value;
+    const choir = source === 'video';
+    dlRows.innerHTML = (choir ? slider('rec', 'Enregistrement', mix.rec) + slider('piano', 'Piano (général)', mix.piano) : '') +
+      voices.map(v => slider(v, VOICE_NAMES[v] || v, level[v], voiceOn(v))).join('');
+    dlPlay.innerHTML = icon(playing ? 'pause' : 'play', 'fill') + `<span>${playing ? 'Pause' : 'Écouter'}</span>`;
+  }
+  // Les notes du piano seul sont programmées d'avance : on les reprogramme après un réglage
+  const replan = () => { if (playing && source !== 'video') seek(pos); };
+  dlRows.addEventListener('input', e => {
+    if (e.target.type !== 'range') return;
+    const row = e.target.closest('.dl-row'), k = row.dataset.k, val = +e.target.value;
+    row.querySelector('output').value = val;
+    if (k === 'rec' || k === 'piano') { mix[k] = val; $(k === 'rec' ? 'volRec' : 'volPiano').value = val; applyMix(); }
+    else { level[k] = val; store.set(LKEY, level); }
+  });
+  dlRows.addEventListener('change', e => {
+    const k = e.target.closest('.dl-row').dataset.k;
+    if (e.target.type === 'checkbox') {
+      vbox.querySelector(`.voice[data-v="${k}"] .v-name`).click();   // même effet que le bouton de la voix
+      dlRender();
+    } else if (k !== 'rec' && k !== 'piano') replan();
+  });
+  dlSrc.onchange = () => { instr.value = dlSrc.value; instr.onchange(); setTimeout(dlRender, 50); };
+  dlPlay.onclick = () => { playBtn.click(); setTimeout(dlRender, 300); };
+  $('dlClose').onclick = () => dlg.close();
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+  /** Rend le mélange hors temps réel, tel qu'il est entendu dans le lecteur. */
+  async function renderMix(progress) {
+    const choir = source === 'video';
+    const organOn = !choir && instr.value === 'organ';
+    const on = voices.filter(v => voiceOn(v) && level[v] > 0);
+    const spw = secPerWhole();
+    let rec = null;
+    if (choir) { progress('Chargement de l’enregistrement…'); rec = await Tone.ToneAudioBuffer.fromUrl(`chants/${id}/${sync.audio}`); }
+    const dur = choir ? rec.duration : plan.TOTAL * spw + 3;
+    progress('Mixage…');
+    return Tone.Offline(async () => {
+      const o = new Tone.Gain(choir ? 1.1 * mix.piano / 100 : 0.85).toDestination();
+      const rv = new Tone.Reverb({ decay: 2.2, wet: 0.2 }).connect(o);
+      const inst = organOn ? new Tone.PolySynth(Tone.Synth, ORGAN) : new Tone.Sampler(PIANO);
+      inst.connect(rv);
+      if (organOn) inst.maxPolyphony = 64;
+      await Promise.all([rv.ready, Tone.loaded()]);
+      if (choir) {
+        new Tone.Player(rec).connect(new Tone.Gain(mix.rec / 100).toDestination()).start(0);
+        for (const v of on) for (const e of C.voiceEvents(dblEvents, v, vmapOf(v), vOffset)) {
+          if (e.t0 < 0 || e.t0 > dur) continue;
+          inst.triggerAttackRelease(C.tunedFreq(e.n.p, C.tuneAt(sync.tune, e.t0)), Math.max(0.08, e.t1 - e.t0 - 0.03), e.t0, velOf(v, true));
+        }
+      } else {
+        for (const e of C.perfEvents(model, plan)) {
+          if (!on.includes(e.n.v)) continue;
+          inst.triggerAttackRelease(Tone.Frequency(e.n.p, 'midi').toFrequency(), Math.max(0.06, e.dP * spw - 0.03), 0.05 + e.P * spw, velOf(e.n.v));
+        }
+      }
+    }, dur);
+  }
+  async function toMp3(ab, progress) {
+    await C.loadScript('https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js');
+    const chans = [...Array(Math.min(2, ab.numberOfChannels)).keys()].map(c => ab.getChannelData(c));
+    const peak = Math.max(...chans.map(d => d.reduce((m, x) => Math.max(m, Math.abs(x)), 0)));
+    const k = 32767 * (peak > 0.98 ? 0.98 / peak : 1);   // évite la saturation
+    const pcm = chans.map(d => Int16Array.from(d, x => x * k));
+    const enc = new lamejs.Mp3Encoder(pcm.length, ab.sampleRate, 192);
+    const parts = [], STEP = 1152 * 256;
+    for (let i = 0; i < pcm[0].length; i += STEP) {
+      parts.push(enc.encodeBuffer(...pcm.map(d => d.subarray(i, i + STEP))));
+      progress(`Encodage MP3… ${Math.round(i / pcm[0].length * 100)} %`);
+      await new Promise(r => setTimeout(r));
+    }
+    parts.push(enc.flush());
+    return new Blob(parts, { type: 'audio/mpeg' });
+  }
+  const goLabel = icon('download') + '<span>Télécharger (MP3)</span>';
+  dlGo.onclick = async () => {
+    const on = voices.filter(v => voiceOn(v) && level[v] > 0);
+    if (source !== 'video' && !on.length) { dlGo.textContent = 'Activez au moins une voix'; setTimeout(() => (dlGo.innerHTML = goLabel), 1800); return; }
+    dlGo.disabled = true;
+    const progress = t => { dlGo.textContent = t; };
+    try {
+      if (playing) pause();
+      const blob = await toMp3((await renderMix(progress)).get(), progress);
+      const what = source === 'video' ? ['Chœur', ...on] : on.length === voices.length ? ['toutes les voix'] : on;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${meta.title} - ${what.map(v => VOICE_NAMES[v] || v).join(', ')}.mp3`.replace(/[\\/:*?"<>|]/g, '');
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    } catch (err) {
+      console.error(err);
+      alert('Le fichier audio n’a pas pu être préparé. Vérifiez la connexion et réessayez.');
+    }
+    dlGo.disabled = false; dlGo.innerHTML = goLabel; dlRender();
+  };
+  dlGo.innerHTML = goLabel;
+  $('dlBtn').innerHTML = icon('download') + '<span class="lbl">Audio</span>';
+  $('dlBtn').hidden = false;
+  $('dlBtn').onclick = () => { dlRender(); dlg.showModal(); };
 
   addEventListener('keydown', e => {
     if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;

@@ -402,3 +402,22 @@ body.video-mode .voice:not(.muted) { border-color: var(--red); background: var(-
   .mixer input { width: 74px; }
   body.video-mode .settings .select { display: none; }
 }
+
+/* ---------- Télécharger l'audio ---------- */
+.dl-dialog {
+  width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .25); padding: 16px;
+}
+.dl-dialog::backdrop { background: rgba(0, 0, 0, .35); }
+.dl-hint { margin: 0; font-size: 13px; color: var(--muted); }
+.dl-row { display: grid; grid-template-columns: 1fr 150px 34px; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+.dl-row label { display: flex; align-items: center; gap: 8px; }
+.dl-row input[type=range], .dl-row input[type=checkbox] { accent-color: var(--red); margin: 0; }
+.dl-row output { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.dl-row.off { opacity: .45; }
+#dlRows { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 2px; }
+.dl-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.dl-actions .btn { height: 38px; }
+.dl-actions .btn:disabled { opacity: .6; cursor: progress; }
+@media (max-width: 600px) { .dl-row { grid-template-columns: 1fr 110px 34px; } }
