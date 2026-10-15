@@ -477,5 +477,60 @@ window.CHANTS = [
   ],
   "video": true,
   "nPages": 3
+ },
+ {
+  "id": "le-lion-est-mort",
+  "title": "Le lion est mort",
+  "category": "Veillée",
+  "authors": "D'après « Mbube » (Solomon Linda) · Paroles françaises : Henri Salvador · Transcription et arrangement : Alain Camps",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 120,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 1,
+   "intro": [
+    [
+     0,
+     36
+    ],
+    [
+     32,
+     36
+    ],
+    [
+     36,
+     44
+    ],
+    [
+     32,
+     36
+    ],
+    [
+     32,
+     36
+    ],
+    [
+     44,
+     48
+    ],
+    [
+     44,
+     48
+    ],
+    [
+     48,
+     60
+    ]
+   ]
+  },
+  "video": false,
+  "nPages": 5
  }
 ];
