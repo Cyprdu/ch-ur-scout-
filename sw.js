@@ -8,6 +8,11 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;7
 const EXTERNAL = [FONTS, 'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js'];
 const ROOT = new URL('./', self.location).href;
 const abs = p => new URL(p, ROOT).href;
+// L'hébergeur redirige chant.html -> /chant : Safari refuse d'afficher une page « redirigée »
+// servie par le service worker, on la recopie donc sans cette marque.
+const clean = res => (res && res.redirected
+  ? res.blob().then(b => new Response(b, { status: res.status, statusText: res.statusText, headers: res.headers }))
+  : res);
 const key = url => { const u = new URL(url); return u.origin === location.origin ? u.origin + u.pathname : url; };
 
 async function report(done, total) {
@@ -21,7 +26,8 @@ async function sync() {
   const entries = Object.entries(self.PRECACHE);
   const todo = [];
   for (const [p, r] of entries) {
-    if (old[p] === r && await cache.match(abs(p))) revs[p] = r; else todo.push([p, r]);
+    const hit = old[p] === r && await cache.match(abs(p));
+    if (hit && !hit.redirected) revs[p] = r; else todo.push([p, r]);
   }
   const total = entries.length;
   let done = total - todo.length, i = 0;
@@ -33,7 +39,7 @@ async function sync() {
       const [p, r] = todo[i++];
       const res = await fetch(abs(p), { cache: 'reload' });
       if (!res.ok) throw new Error(`${p} : ${res.status}`);
-      await cache.put(abs(p), res);
+      await cache.put(abs(p), await clean(res));
       revs[p] = r; done++;
       if (done % 5 === 0 || done === total) { await save(); report(done, total); }
     }
@@ -69,10 +75,11 @@ self.addEventListener('fetch', e => {
   if (url.origin === location.origin && url.pathname.startsWith('/api/')) return;   // studio local
   const k = req.mode === 'navigate' && url.pathname.endsWith('/') ? abs('index.html') : key(req.url);
   e.respondWith(caches.open(CACHE).then(async cache => {
-    const hit = await cache.match(k);
-    if (hit) return hit;
+    // /chant (adresse après redirection) = chant.html
+    const hit = await cache.match(k) || (/\/[^./]+$/.test(url.pathname) && await cache.match(k + '.html'));
+    if (hit) return clean(hit);
     try {
-      const res = await fetch(req);
+      const res = await clean(await fetch(req));
       if (res.ok && url.origin !== location.origin) cache.put(k, res.clone());   // ex. fichiers de police
       return res;
     } catch (err) {
