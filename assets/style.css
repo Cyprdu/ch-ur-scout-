@@ -432,3 +432,11 @@ body.video-mode .voice:not(.muted) { border-color: var(--red); background: var(-
 .dl-actions .btn { height: 38px; }
 .dl-actions .btn:disabled { opacity: .6; cursor: progress; }
 @media (max-width: 600px) { .dl-row { grid-template-columns: 1fr 110px 34px; } }
+
+/* ---------- Hors ligne ---------- */
+.offline-pill {
+  position: fixed; left: 50%; top: 64px; transform: translate(-50%, -8px); z-index: 70;
+  background: var(--ink); color: var(--bg); font-size: 13px; padding: 7px 14px; border-radius: 999px;
+  box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; white-space: nowrap;
+}
+.offline-pill.show { opacity: .94; transform: translate(-50%, 0); }
