@@ -251,6 +251,8 @@ class Handler(SimpleHTTPRequestHandler):
             e = t.setdefault(chant, {'voices': {}})
             e['choir'] = choir == '1'
             e['voices'][voice] = hashlib.md5(body).hexdigest()[:8]
+            e.get('d', {}).pop(voice, None)
+            e['piano'] = [v for v in e.get('piano', []) if v != voice] + ([] if choir == '1' else [voice])
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(head + json.dumps(t, ensure_ascii=False, indent=1) + ';')
             return self.send_json({'ok': True, 'size': len(body)})

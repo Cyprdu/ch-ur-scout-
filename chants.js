@@ -577,7 +577,7 @@ window.CHANTS = [
     ]
    ]
   },
-  "video": false,
+  "video": true,
   "nPages": 1
  },
  {
@@ -759,7 +759,7 @@ window.CHANTS = [
     ]
    }
   },
-  "video": false,
+  "video": true,
   "nPages": 4
  }
 ];

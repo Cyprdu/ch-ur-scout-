@@ -7,14 +7,15 @@
 <meta name="description" content="Concert de Noël du chœur scout Adjuva Nos : chaque chant, voix par voix.">
 <meta name="theme-color" content="#1a1a1a">
 <link rel="icon" href="assets/favicon.png">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="noel/pochette-512.jpg">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root { --bg: #1a1a1a; --card: #242322; --line: #3a3733; --or: #c9ad68; --or2: #91804f; --txt: #fff; --mut: #b9b4aa; }
 * { box-sizing: border-box; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--txt); font: 16px/1.5 Poppins, system-ui, sans-serif; padding-bottom: calc(120px + env(safe-area-inset-bottom)); overflow-x: hidden; }
+body { margin: 0; background: var(--bg); color: var(--txt); font: 16px/1.5 Poppins, system-ui, sans-serif; padding-bottom: calc(190px + env(safe-area-inset-bottom)); overflow-x: hidden; }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
 :focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: grid; gap: 24px; }
@@ -25,11 +26,12 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .flakes svg { position: absolute; opacity: .18; }
 h1 { font: 600 clamp(38px, 9vw, 54px)/1 Caveat, cursive; margin: 0 0 4px; }
 .sub { margin: 0; color: var(--mut); font-size: 14.5px; }
-.voices { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 12px 0; background: var(--bg); }
-.voices button { min-height: 46px; border-radius: 10px; border: 1px solid var(--line); font-weight: 500; font-size: 14px; }
+.voices { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 12px 0; background: var(--bg); }
+.voices button { min-height: 46px; border-radius: 10px; border: 1px solid var(--line); font-weight: 500; font-size: clamp(12.5px, 3.5vw, 15px); }
 .voices button[aria-pressed=true] { background: var(--or); border-color: var(--or); color: #1a1a1a; font-weight: 600; }
 ol { list-style: none; margin: 0; padding: 0; }
-.song { display: grid; grid-template-columns: 48px 1fr auto; gap: 14px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.song { display: grid; grid-template-columns: 38px 1fr auto 48px; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.num { font: 600 40px/1 Caveat, cursive; color: var(--or); text-align: center; }
 .pl { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--or); color: var(--or); display: grid; place-items: center; }
 .pl svg { width: 20px; height: 20px; fill: currentColor; }
 .pl:disabled { opacity: .35; }
@@ -41,22 +43,34 @@ ol { list-style: none; margin: 0; padding: 0; }
 .alt button { font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 99px; }
 .alt button.on { border-color: var(--or); color: var(--or); }
 .links { display: flex; gap: 4px; }
-.links a { width: 42px; height: 42px; display: grid; place-items: center; color: var(--mut); border-radius: 10px; }
+.links { margin-right: 4px; gap: 0; }
+.links a { width: 34px; height: 44px; display: grid; place-items: center; color: var(--mut); border-radius: 10px; }
 .links a:hover { color: var(--or); }
-.links svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.links svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .bar { position: fixed; inset: auto 0 0; z-index: 5; background: #111; border-top: 1px solid var(--or2); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
 .bar > div { max-width: 1088px; margin: 0 auto; }
 .bar .now { display: flex; align-items: center; gap: 10px; }
 .bar .now > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 14.5px; }
 .bar button { width: 44px; height: 44px; display: grid; place-items: center; flex: none; border-radius: 50%; }
 .bar button.big { background: var(--or); color: #1a1a1a; }
-.bar svg { width: 20px; height: 20px; fill: currentColor; }
+.all { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; margin-top: 14px; border-radius: 12px; border: 1.5px solid var(--or); color: var(--or); font-weight: 600; }
+.all svg { width: 20px; height: 20px; fill: currentColor; }
+.order { display: flex; align-items: center; gap: 12px; margin: 18px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--or); }
+.order::after { content: ''; flex: 1; height: 1px; background: var(--or2); }
+.bar .cov { width: 52px; height: 52px; border-radius: 8px; flex: none; }
+.loops { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.bar .loops button { width: auto; height: 42px; border-radius: 10px; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--mut); }
+.bar .loops button[aria-pressed=true] { border-color: var(--or); color: #1a1a1a; background: var(--or); }
+.loops svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bar .now svg { width: 20px; height: 20px; fill: currentColor; }
 .seek { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--mut); font-variant-numeric: tabular-nums; }
 .seek input { flex: 1; min-width: 0; accent-color: var(--or); height: 24px; }
 footer { color: var(--mut); font-size: 13px; padding: 24px 0; }
 footer a { color: var(--or); }
 @media (min-width: 900px) {
   .wrap { grid-template-columns: 400px 1fr; gap: 56px; padding: 40px 24px 0; }
+  .num { font-size: 44px; }
+  .song { grid-template-columns: 52px 1fr auto 48px; }
   .poster { margin: 0; aspect-ratio: auto; border-radius: 6px; align-self: start; position: sticky; top: 40px; }
   .poster::after { display: none; }
 }
@@ -68,18 +82,21 @@ footer a { color: var(--or); }
   <div class="poster"><img src="noel/affiche.jpg" width="1413" height="2000" alt="Le chœur scout Adjuva Nos présente le concert de Noël, mercredi 2 décembre, église du Saint-Nom-de-Jésus, 91 rue Tête d'Or, Lyon 6e, de 20h30 à 22h"></div>
   <main>
     <h1>Apprendre ma voix</h1>
-    <p class="sub">Choisissez votre pupitre, puis touchez un chant&nbsp;: votre voix est jouée au piano par-dessus le chœur.</p>
+    <p class="sub">Choisissez votre voix, ou le chœur entier. Vous pouvez verrouiller le téléphone&nbsp;: la musique continue.</p>
     <div class="voices" id="voices" role="group" aria-label="Pupitre"></div>
+    <p class="order">Dans l’ordre du concert</p>
+    <button class="all" id="all"></button>
     <ol id="list"></ol>
     <footer>Mercredi 2 décembre, 20h30 à 22h · Église du Saint-Nom-de-Jésus, 91 rue Tête d’Or, Lyon 6<sup>e</sup><br><a href="index.html">Tous les chants de la chorale</a></footer>
   </main>
 </div>
 <div class="bar" id="bar" hidden><div>
-  <div class="now"><span id="nowT"></span>
+  <div class="now"><img class="cov" src="noel/pochette-512.jpg" alt="" width="52" height="52"><span id="nowT"></span>
     <button id="prev" aria-label="Chant précédent"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14L9.5 12z"/></svg></button>
     <button id="pp" class="big" aria-label="Lecture / pause"></button>
     <button id="next" aria-label="Chant suivant"><svg viewBox="0 0 24 24"><path d="M15.500 5H18v14h-2.500zM4 5v14l10.500-7z"/></svg></button></div>
   <div class="seek"><span id="cur">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="dur">0:00</span></div>
+  <div class="loops"><button id="l1"><svg viewBox="0 0 24 24"><path d="M17 2.500 20.500 6 17 9.500M3.500 11V9a3 3 0 0 1 3-3h14M7 21.500 3.500 18 7 14.500M20.500 13v2a3 3 0 0 1-3 3h-14"/></svg>Ce chant en boucle</button><button id="lA"><svg viewBox="0 0 24 24"><path d="M17 2.500 20.500 6 17 9.500M3.500 11V9a3 3 0 0 1 3-3h14M7 21.500 3.500 18 7 14.500M20.500 13v2a3 3 0 0 1-3 3h-14"/></svg>Tout en boucle</button></div>
 </div></div>
 <audio id="au" preload="metadata"></audio>
 
@@ -87,13 +104,13 @@ footer a { color: var(--or); }
 <script>
 (() => {
   const $ = id => document.getElementById(id), au = $('au');
-  const NAMES = { S: 'Soprano', A: 'Alto', T: 'Ténor', B: 'Basse', S2: 'Soprano 2', Solo: 'Solo' };
+  const NAMES = { Tutti: 'Chœur', S: 'Soprano', A: 'Alto', T: 'Ténor', B: 'Basse', S2: 'Soprano 2', Solo: 'Solo' };
   const PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4.500v15l13-7.500z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
   const DL = '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.500 11 12 15.500 16.500 11M5 20h14"/></svg>', SC = '<svg viewBox="0 0 24 24"><path d="M9 18V6l11-2v12"/><circle cx="6.500" cy="18" r="2.500"/><circle cx="17.500" cy="16" r="2.500"/></svg>';
   const P = window.PISTES || {};
-  let voice = 'S';
-  try { voice = localStorage.getItem('noel-voix') || 'S'; } catch {}
-  if (!NAMES[voice]) voice = 'S';
+  let voice = 'Tutti', loop = '';
+  try { voice = localStorage.getItem('noel-voix') || voice; loop = localStorage.getItem('noel-boucle') || ''; } catch {}
+  if (!['Tutti', 'S', 'A', 'T', 'B'].includes(voice)) voice = 'Tutti';
   let cur = -1, curV = null;
 
   // pistes proposées pour un chant et un pupitre
@@ -101,32 +118,39 @@ footer a { color: var(--or); }
     if (s.audio) return [{ v: '', url: s.audio }];
     const e = P[s.id];
     if (!e) return [];
-    const keys = Object.keys(e.voices).filter(k => k === v || (v === 'S' && k === 'S2') || k === 'Solo').sort((a, b) => (b === v) - (a === v));
-    return keys.map(k => ({ v: k, url: `noel/${s.id}-${k}.mp3?${e.voices[k]}` }));
+    const keys = Object.keys(e.voices).filter(k => k === v || (v === 'S' && k === 'S2') || (k === 'Solo' && v !== 'Tutti')).sort((a, b) => (b === v) - (a === v));
+    if (!keys.includes(v)) return [];
+    return keys.map(k => ({ v: k, url: (k === 'Tutti' ? `chants/${s.id}/enregistrement.mp3` : `noel/${s.id}-${k}.mp3`) + '?' + e.voices[k] }));
   };
   const label = (s, k) => (k === 'S' && s.id && P[s.id] && P[s.id].voices.S2 ? 'Soprano 1' : NAMES[k] || '');
 
   function render() {
-    $('voices').innerHTML = ['S', 'A', 'T', 'B'].map(v => `<button data-v="${v}" aria-pressed="${v === voice}">${NAMES[v]}</button>`).join('');
+    $('voices').innerHTML = ['Tutti', 'S', 'A', 'T', 'B'].map(v => `<button data-v="${v}" aria-pressed="${v === voice}">${NAMES[v]}</button>`).join('');
     $('list').innerHTML = NOEL.map((s, i) => {
       const t = tracks(s, voice), on = i === cur, e = P[s.id], sel = on ? t.find(x => x.v === curV) || t[0] : t[0];
-      const info = on && loading ? 'Chargement…' : s.audio ? 'Enregistrement du chœur' : !e ? 'Bientôt disponible' : e.choir ? 'Chœur + piano' : 'Piano seul';
-      return `<li class="song${on ? ' on' : ''}" data-i="${i}"><button class="pl"${t.length ? '' : ' disabled'} aria-label="Écouter ${s.titre}">${on && (loading ? wanted : !au.paused) ? PAUSE : PLAY}</button>
-        <div><button class="t"${t.length ? '' : ' disabled'}>${s.titre}</button><span class="m">${info}</span>
+      const info = on && loading ? 'Chargement…' : s.audio ? 'Enregistrement du chœur' : !sel ? 'Pas d’enregistrement du chœur' : sel.v === 'Tutti' ? 'Chœur' : (e.piano || []).includes(sel.v) ? 'Voix au piano' : 'Voix + chœur';
+      return `<li class="song${on ? ' on' : ''}" data-i="${i}"><span class="num" aria-hidden="true">${i + 1}</span>
+        <div><button class="t"${t.length ? '' : ' disabled'}><span class="sr">Chant n° ${i + 1} : </span>${s.titre}</button><span class="m">${info}</span>
         ${t.length > 1 ? `<div class="alt">${t.map(x => `<button data-k="${x.v}" class="${on && x.v === sel.v ? 'on' : ''}">${label(s, x.v)}</button>`).join('')}</div>` : ''}</div>
-        <div class="links">${sel ? `<a href="${sel.url}" download="${s.titre}${sel.v ? ' - ' + label(s, sel.v) : ''}.mp3" aria-label="Télécharger" title="Télécharger le MP3">${DL}</a>` : ''}${s.id ? `<a href="chant.html?c=${s.id}" aria-label="Partition" title="Partition">${SC}</a>` : ''}</div></li>`;
+        <div class="links">${s.id ? `<a href="chant.html?c=${s.id}" aria-label="Partition" title="Partition">${SC}</a>` : ''}${sel ? `<a href="${sel.url}" download="${i + 1} - ${s.titre}${sel.v ? ' - ' + label(s, sel.v) : ''}.mp3" aria-label="Télécharger" title="Télécharger le MP3">${DL}</a>` : ''}</div>
+        <button class="pl"${t.length ? '' : ' disabled'} aria-label="Écouter ${s.titre}">${on && (loading ? wanted : !au.paused) ? PAUSE : PLAY}</button></li>`;
     }).join('');
+    $('all').innerHTML = PLAY + 'Tout écouter dans l’ordre';
+    $('l1').setAttribute('aria-pressed', loop === '1'); $('lA').setAttribute('aria-pressed', loop === 'A');
+    au.loop = loop === '1' && !loading;
     $('pp').innerHTML = (loading ? !wanted : au.paused) ? PLAY : PAUSE;
   }
   // L'hébergeur ne gère pas les lectures partielles (refusées par Safari) : la piste est chargée en entier.
-  const blobs = new Map();
+  const blobs = new Map(), ready = new Map();   // ready : pistes déjà chargées, enchaînables écran éteint
   const get = url => {
     if (!blobs.has(url)) {
-      if (blobs.size > 5) { const [k, p] = blobs.entries().next().value; blobs.delete(k); p.then(u => { if (u !== au.src) URL.revokeObjectURL(u); }, () => {}); }
-      const p = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => URL.createObjectURL(new Blob([b], { type: 'audio/mpeg' })));
+      if (blobs.size > 5) { const [k, p] = blobs.entries().next().value; blobs.delete(k); ready.delete(k); p.then(u => { if (u !== au.src) URL.revokeObjectURL(u); }, () => {}); }
+      const p = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => URL.createObjectURL(new Blob([b], { type: 'audio/mpeg' })))
+        .then(u => { ready.set(url, u); return u; });
       p.catch(() => blobs.delete(url));
       blobs.set(url, p);
     }
+    else { const p = blobs.get(url); blobs.delete(url); blobs.set(url, p); }
     return blobs.get(url);
   };
   // court silence joué dans le geste : iOS autorise ensuite la lecture une fois la piste chargée
@@ -137,46 +161,67 @@ footer a { color: var(--or); }
   let ticket = 0, unlocked = false, loading = false, wanted = false;
   async function load(url, at, play) {
     const t = ++ticket;
-    au.pause();
-    if (play && !unlocked) { unlocked = true; au.src = SILENCE; au.play().catch(() => {}); }
-    loading = true; wanted = play;
-    let src;
-    try { src = await get(url); } catch { if (t === ticket) { loading = false; $('nowT').textContent = 'Chargement impossible : vérifiez la connexion'; render(); } return; }
-    if (t !== ticket) return;
+    // piste déjà prête : on enchaîne sans attendre, sinon iOS coupe la lecture quand l'écran est éteint
+    let src = ready.get(url);
+    wanted = play;
+    if (!src) {
+      loading = true;
+      au.loop = false;
+      if (play && !unlocked) { unlocked = true; au.src = SILENCE; au.play().catch(() => {}); } else au.pause();
+      try { src = await get(url); } catch { if (t === ticket) { loading = false; $('nowT').textContent = 'Chargement impossible : vérifiez la connexion'; render(); } return; }
+      if (t !== ticket) return;
+    }
+    if (play) unlocked = true;
     loading = false;
     au.src = src;
-    if (at) au.addEventListener('loadedmetadata', () => { au.currentTime = at; }, { once: true });
+    if (at) au.addEventListener('loadedmetadata', () => { if (t === ticket) au.currentTime = at; }, { once: true });
     if (wanted) au.play().catch(() => {});
     render();
-    const nx = NOEL[cur + 1] && tracks(NOEL[cur + 1], voice)[0];
-    if (nx) get(nx.url).catch(() => {});
+    ahead();
   }
+  // charge d'avance le chant suivant
+  function ahead() { const n = cur < 0 ? -1 : follow(1); if (n >= 0) get(tracks(NOEL[n], voice)[0].url).catch(() => {}); }
   function start(i, k, at = 0, play = true) {
     const s = NOEL[i], t = tracks(s, voice), x = t.find(x => x.v === k) || t[0];
     if (!x) return;
     cur = i; curV = x.v;
     load(x.url, at, play);
     $('bar').hidden = false;
-    const name = s.titre + (x.v ? ' · ' + label(s, x.v) : '');
+    const name = `${i + 1}. ` + s.titre + (x.v ? ' · ' + label(s, x.v) : '');
     $('nowT').textContent = name;
-    if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: name, artist: 'Chœur scout Adjuva Nos', album: 'Concert de Noël', artwork: [{ src: 'noel/affiche.jpg', sizes: '1413x2000', type: 'image/jpeg' }] });
+    if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: name, artist: 'Chœur scout Adjuva Nos', album: `Concert de Noël · chant ${i + 1} sur ${NOEL.length}`, artwork: [['pochette-512', 512], ['pochette', 1024]].map(([f, w]) => ({ src: new URL(`noel/${f}.jpg`, location.href).href, sizes: `${w}x${w}`, type: 'image/jpeg' })) });
     render();
   }
   const toggle = () => (loading ? (wanted = !wanted, render()) : au.paused ? au.play().catch(() => {}) : au.pause());
-  const step = d => { for (let i = cur + d; i >= 0 && i < NOEL.length; i += d) if (tracks(NOEL[i], voice).length) return start(i); };
+  // chant suivant ou précédent qui a une piste pour ce pupitre (-1 : aucun)
+  function follow(d) {
+    for (let n = 1, i = cur; n <= NOEL.length; n++) {
+      i += d;
+      if (i < 0 || i >= NOEL.length) { if (loop !== 'A') return -1; i = (i + NOEL.length) % NOEL.length; }
+      if (tracks(NOEL[i], voice).length) return i;
+    }
+    return -1;
+  }
+  const step = d => { const i = follow(d); if (i >= 0) start(i); };
+  const setLoop = v => { loop = loop === v ? '' : v; try { localStorage.setItem('noel-boucle', loop); } catch {} render(); if (!loading) ahead(); };
+  $('l1').onclick = () => setLoop('1'); $('lA').onclick = () => setLoop('A');
+  $('all').onclick = () => { if (loop === '1') setLoop('1'); const i = NOEL.findIndex(s => tracks(s, voice).length); if (i >= 0) start(i); };
+  // même endroit seulement si les deux pistes ont la même durée
+  const resume = (i, k) => { const d = (P[NOEL[i].id] || {}).d || {}; return i === cur && !loading && Math.abs((d[k] || 0) - (d[curV] || 0)) < 1 ? au.currentTime : 0; };
   $('voices').onclick = e => {
     const b = e.target.closest('button');
     if (!b) return;
     voice = b.dataset.v;
     try { localStorage.setItem('noel-voix', voice); } catch {}
     // même chant, même endroit, nouvelle voix
-    if (cur >= 0 && !NOEL[cur].audio) start(cur, voice, loading ? 0 : au.currentTime, loading ? wanted : !au.paused); else render();
+    if (cur < 0 || NOEL[cur].audio || !tracks(NOEL[cur], voice).length) { render(); if (!loading) ahead(); return; }
+    start(cur, voice, resume(cur, voice), loading ? wanted : !au.paused);
   };
   $('list').onclick = e => {
     const li = e.target.closest('.song'), b = e.target.closest('button');
     if (!b) return;
     const i = +li.dataset.i;
-    if (b.dataset.k) start(i, b.dataset.k, i === cur && !loading ? au.currentTime : 0);
+    if (b.dataset.k) start(i, b.dataset.k, resume(i, b.dataset.k));
     else if (i === cur) toggle();
     else start(i);
   };
@@ -186,7 +231,15 @@ footer a { color: var(--or); }
   au.onended = () => { if (!loading) step(1); };
   au.ontimeupdate = () => { if (loading) return; $('cur').textContent = fmt(au.currentTime); $('dur').textContent = fmt(au.duration); if (au.duration) $('seek').value = au.currentTime / au.duration * 1000; };
   $('seek').oninput = e => { if (au.duration) au.currentTime = e.target.value / 1000 * au.duration; };
-  if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('previoustrack', () => step(-1)); navigator.mediaSession.setActionHandler('nexttrack', () => step(1)); }
+  // commandes de l'écran verrouillé
+  if ('mediaSession' in navigator) {
+    const ms = navigator.mediaSession, on = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
+    on('play', () => au.play().catch(() => {})); on('pause', () => au.pause());
+    on('previoustrack', () => step(-1)); on('nexttrack', () => step(1));
+    on('seekto', e => { if (au.duration) au.currentTime = e.seekTime; });
+    const pos = () => { ms.playbackState = au.paused ? 'paused' : 'playing'; if (!loading && isFinite(au.duration) && au.duration) try { ms.setPositionState({ duration: au.duration, position: Math.min(au.currentTime, au.duration), playbackRate: 1 }); } catch {} };
+    ['loadedmetadata', 'play', 'pause', 'seeked'].forEach(x => au.addEventListener(x, pos));
+  }
 
   // flocons dorés de l'affiche
   const arm = '<path d="M50 50V6M50 18 40 8M50 18 60 8M50 30 38 18M50 30 62 18"/>';
