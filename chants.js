@@ -532,5 +532,234 @@ window.CHANTS = [
   },
   "video": false,
   "nPages": 5
+ },
+ {
+  "id": "maintenant-seigneur",
+  "title": "Maintenant, Seigneur",
+  "category": "Veillée de Noël",
+  "authors": "Paroles d'après Lc 2, 29-32 et musique : Sœur Luce Martens · © Éditions de l'Emmanuel",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 66,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 2,
+   "intro": [
+    [
+     0,
+     5.75
+    ]
+   ],
+   "couplet": {
+    "*": [
+     [
+      5.75,
+      14
+     ]
+    ]
+   },
+   "between": [
+    [
+     0,
+     5.75
+    ]
+   ],
+   "last": [
+    [
+     0,
+     5.75
+    ]
+   ]
+  },
+  "video": false,
+  "nPages": 1
+ },
+ {
+  "id": "venez-tous-accourez",
+  "title": "Venez tous, accourez",
+  "category": "Veillée de Noël",
+  "authors": "Musique : Benoît Collet",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 115,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 4,
+   "couplet": {
+    "*": [
+     [
+      0,
+      15.5
+     ]
+    ]
+   }
+  },
+  "video": false,
+  "nPages": 3
+ },
+ {
+  "id": "il-est-au-milieu-de-nous",
+  "title": "Il est au milieu de nous",
+  "category": "Veillée de Noël",
+  "authors": "Paroles et musique : Thibault Fromant (Ad Dei Gloriam)",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 120,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 3,
+   "intro": [
+    [
+     0,
+     9
+    ]
+   ],
+   "couplet": {
+    "*": [
+     [
+      9,
+      26
+     ]
+    ]
+   },
+   "between": [
+    [
+     1,
+     9
+    ]
+   ],
+   "last": [
+    [
+     1,
+     9
+    ]
+   ]
+  },
+  "video": true,
+  "nPages": 3
+ },
+ {
+  "id": "l-eveil-du-salut",
+  "title": "L'éveil du Salut",
+  "category": "Veillée de Noël",
+  "authors": "Texte : Baudouin Tertrais · Musique : Jean de la Charie",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 85,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 5,
+   "intro": [
+    [
+     0,
+     12
+    ]
+   ],
+   "couplet": {
+    "1": [
+     [
+      12,
+      20
+     ]
+    ],
+    "2": [
+     [
+      20,
+      28.5
+     ]
+    ],
+    "3": [
+     [
+      12,
+      20
+     ]
+    ],
+    "4": [
+     [
+      20,
+      28.5
+     ]
+    ],
+    "5": [
+     [
+      12,
+      20
+     ]
+    ]
+   },
+   "between": [
+    [
+     0,
+     12
+    ]
+   ],
+   "last": [
+    [
+     0,
+     12
+    ]
+   ],
+   "outro": [
+    [
+     28.5,
+     36.75
+    ]
+   ]
+  },
+  "video": false,
+  "nPages": 3
+ },
+ {
+  "id": "la-nativite",
+  "title": "La Nativité",
+  "category": "Veillée de Noël",
+  "authors": "3e mystère joyeux · Texte : Pauline Riobée · Musique : Jacques Montagne",
+  "voices": [
+   "S",
+   "A",
+   "T",
+   "B"
+  ],
+  "tempo": {
+   "bpm": 90,
+   "unit": 0.25
+  },
+  "structure": {
+   "verses": 1,
+   "couplet": {
+    "*": [
+     [
+      0,
+      48.0
+     ]
+    ]
+   }
+  },
+  "video": false,
+  "nPages": 4
  }
 ];

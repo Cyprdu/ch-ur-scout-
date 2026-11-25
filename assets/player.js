@@ -562,10 +562,10 @@
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
   /** Rend le mélange hors temps réel, tel qu'il est entendu dans le lecteur. */
-  async function renderMix(progress) {
+  async function renderMix(progress, only) {
     const choir = source === 'video';
     const organOn = !choir && instr.value === 'organ';
-    const on = voices.filter(v => voiceOn(v) && level[v] > 0);
+    const on = only || voices.filter(v => voiceOn(v) && level[v] > 0);
     const spw = secPerWhole(), lag = PIANO_LAG;
     let rec = null;
     if (choir) { progress('Chargement de l’enregistrement…'); rec = await Tone.ToneAudioBuffer.fromUrl(`chants/${id}/${sync.audio}`); }
@@ -592,13 +592,13 @@
       }
     }, dur);
   }
-  async function toMp3(ab, progress) {
+  async function toMp3(ab, progress, kbps = 192) {
     await C.loadScript('https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js');
     const chans = [...Array(Math.min(2, ab.numberOfChannels)).keys()].map(c => ab.getChannelData(c));
     const peak = Math.max(...chans.map(d => d.reduce((m, x) => Math.max(m, Math.abs(x)), 0)));
     const k = 32767 * (peak > 0.98 ? 0.98 / peak : 1);   // évite la saturation
     const pcm = chans.map(d => Int16Array.from(d, x => x * k));
-    const enc = new lamejs.Mp3Encoder(pcm.length, ab.sampleRate, 192);
+    const enc = new lamejs.Mp3Encoder(pcm.length, ab.sampleRate, kbps);
     const parts = [], STEP = 1152 * 256;
     for (let i = 0; i < pcm[0].length; i += STEP) {
       parts.push(enc.encodeBuffer(...pcm.map(d => d.subarray(i, i + STEP))));
@@ -608,6 +608,16 @@
     parts.push(enc.flush());
     return new Blob(parts, { type: 'audio/mpeg' });
   }
+  // Export de la veillée de Noël (noel-export.html) : une voix au piano par-dessus le chœur
+  window.choraleExport = {
+    voices, choir: canChoir,
+    async render(v, progress = () => {}) {
+      if (canChoir && source !== 'video') { instr.value = 'video'; await setSource('video'); }
+      voices.forEach(x => { level[x] = 100; });
+      mix.rec = 50; mix.piano = 100;
+      return toMp3((await renderMix(progress, [v])).get(), progress, 128);
+    },
+  };
   const goLabel = icon('download') + '<span>Télécharger (MP3)</span>';
   dlGo.onclick = async () => {
     const on = voices.filter(v => voiceOn(v) && level[v] > 0);

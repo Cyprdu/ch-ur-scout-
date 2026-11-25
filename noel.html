@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Concert de Noël — Apprendre ma voix</title>
+<meta name="description" content="Concert de Noël du chœur scout Adjuva Nos : chaque chant, voix par voix.">
+<meta name="theme-color" content="#1a1a1a">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #1a1a1a; --card: #242322; --line: #3a3733; --or: #c9ad68; --or2: #91804f; --txt: #fff; --mut: #b9b4aa; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--txt); font: 16px/1.5 Poppins, system-ui, sans-serif; padding-bottom: calc(120px + env(safe-area-inset-bottom)); overflow-x: hidden; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
+:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: grid; gap: 24px; }
+.poster { margin: 0 -16px; position: relative; aspect-ratio: 1413 / 1700; overflow: hidden; background: #111; }
+.poster img { width: 100%; height: auto; display: block; }
+.poster::after { content: ''; position: absolute; inset: auto 0 0; height: 22%; background: linear-gradient(transparent, var(--bg)); }
+.flakes { position: fixed; inset: 0; pointer-events: none; z-index: -1; color: var(--or2); }
+.flakes svg { position: absolute; opacity: .18; }
+h1 { font: 600 clamp(38px, 9vw, 54px)/1 Caveat, cursive; margin: 0 0 4px; }
+.sub { margin: 0; color: var(--mut); font-size: 14.5px; }
+.voices { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 12px 0; background: var(--bg); }
+.voices button { min-height: 46px; border-radius: 10px; border: 1px solid var(--line); font-weight: 500; font-size: 14px; }
+.voices button[aria-pressed=true] { background: var(--or); border-color: var(--or); color: #1a1a1a; font-weight: 600; }
+ol { list-style: none; margin: 0; padding: 0; }
+.song { display: grid; grid-template-columns: 48px 1fr auto; gap: 14px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.pl { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--or); color: var(--or); display: grid; place-items: center; }
+.pl svg { width: 20px; height: 20px; fill: currentColor; }
+.pl:disabled { opacity: .35; }
+.song.on .pl { background: var(--or); color: #1a1a1a; }
+.song.on .t { color: var(--or); }
+.t { font-weight: 500; line-height: 1.3; text-align: left; display: block; width: 100%; }
+.m { font-size: 13px; color: var(--mut); }
+.alt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.alt button { font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 99px; }
+.alt button.on { border-color: var(--or); color: var(--or); }
+.links { display: flex; gap: 4px; }
+.links a { width: 42px; height: 42px; display: grid; place-items: center; color: var(--mut); border-radius: 10px; }
+.links a:hover { color: var(--or); }
+.links svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bar { position: fixed; inset: auto 0 0; z-index: 5; background: #111; border-top: 1px solid var(--or2); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+.bar > div { max-width: 1088px; margin: 0 auto; }
+.bar .now { display: flex; align-items: center; gap: 10px; }
+.bar .now > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 14.5px; }
+.bar button { width: 44px; height: 44px; display: grid; place-items: center; flex: none; border-radius: 50%; }
+.bar button.big { background: var(--or); color: #1a1a1a; }
+.bar svg { width: 20px; height: 20px; fill: currentColor; }
+.seek { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--mut); font-variant-numeric: tabular-nums; }
+.seek input { flex: 1; min-width: 0; accent-color: var(--or); height: 24px; }
+footer { color: var(--mut); font-size: 13px; padding: 24px 0; }
+footer a { color: var(--or); }
+@media (min-width: 900px) {
+  .wrap { grid-template-columns: 400px 1fr; gap: 56px; padding: 40px 24px 0; }
+  .poster { margin: 0; aspect-ratio: auto; border-radius: 6px; align-self: start; position: sticky; top: 40px; }
+  .poster::after { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="flakes" id="flakes" aria-hidden="true"></div>
+<div class="wrap">
+  <div class="poster"><img src="noel/affiche.jpg" width="1413" height="2000" alt="Le chœur scout Adjuva Nos présente le concert de Noël, mercredi 2 décembre, église du Saint-Nom-de-Jésus, 91 rue Tête d'Or, Lyon 6e, de 20h30 à 22h"></div>
+  <main>
+    <h1>Apprendre ma voix</h1>
+    <p class="sub">Choisissez votre pupitre, puis touchez un chant&nbsp;: votre voix est jouée au piano par-dessus le chœur.</p>
+    <div class="voices" id="voices" role="group" aria-label="Pupitre"></div>
+    <ol id="list"></ol>
+    <footer>Mercredi 2 décembre, 20h30 à 22h · Église du Saint-Nom-de-Jésus, 91 rue Tête d’Or, Lyon 6<sup>e</sup><br><a href="index.html">Tous les chants de la chorale</a></footer>
+  </main>
+</div>
+<div class="bar" id="bar" hidden><div>
+  <div class="now"><span id="nowT"></span>
+    <button id="prev" aria-label="Chant précédent"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14L9.5 12z"/></svg></button>
+    <button id="pp" class="big" aria-label="Lecture / pause"></button>
+    <button id="next" aria-label="Chant suivant"><svg viewBox="0 0 24 24"><path d="M15.500 5H18v14h-2.500zM4 5v14l10.500-7z"/></svg></button></div>
+  <div class="seek"><span id="cur">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="dur">0:00</span></div>
+</div></div>
+<audio id="au" preload="metadata"></audio>
+
+<script>document.write(['chants.js', 'noel/programme.js', 'noel/pistes.js'].map(s => `<script src="${s}?${Date.now()}"><\/script>`).join(''))</script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), au = $('au');
+  const NAMES = { S: 'Soprano', A: 'Alto', T: 'Ténor', B: 'Basse', S2: 'Soprano 2', Solo: 'Solo' };
+  const PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4.500v15l13-7.500z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+  const DL = '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.500 11 12 15.500 16.500 11M5 20h14"/></svg>', SC = '<svg viewBox="0 0 24 24"><path d="M9 18V6l11-2v12"/><circle cx="6.500" cy="18" r="2.500"/><circle cx="17.500" cy="16" r="2.500"/></svg>';
+  const P = window.PISTES || {};
+  let voice = 'S';
+  try { voice = localStorage.getItem('noel-voix') || 'S'; } catch {}
+  if (!NAMES[voice]) voice = 'S';
+  let cur = -1, curV = null;
+
+  // pistes proposées pour un chant et un pupitre
+  const tracks = (s, v) => {
+    if (s.audio) return [{ v: '', url: s.audio }];
+    const e = P[s.id];
+    if (!e) return [];
+    const keys = Object.keys(e.voices).filter(k => k === v || (v === 'S' && k === 'S2') || k === 'Solo').sort((a, b) => (b === v) - (a === v));
+    return keys.map(k => ({ v: k, url: `noel/${s.id}-${k}.mp3?${e.voices[k]}` }));
+  };
+  const label = (s, k) => (k === 'S' && s.id && P[s.id] && P[s.id].voices.S2 ? 'Soprano 1' : NAMES[k] || '');
+
+  function render() {
+    $('voices').innerHTML = ['S', 'A', 'T', 'B'].map(v => `<button data-v="${v}" aria-pressed="${v === voice}">${NAMES[v]}</button>`).join('');
+    $('list').innerHTML = NOEL.map((s, i) => {
+      const t = tracks(s, voice), on = i === cur, e = P[s.id], sel = on ? t.find(x => x.v === curV) || t[0] : t[0];
+      const info = s.audio ? 'Enregistrement du chœur' : !e ? 'Bientôt disponible' : e.choir ? 'Chœur + piano' : 'Piano seul';
+      return `<li class="song${on ? ' on' : ''}" data-i="${i}"><button class="pl"${t.length ? '' : ' disabled'} aria-label="Écouter ${s.titre}">${on && !au.paused ? PAUSE : PLAY}</button>
+        <div><button class="t"${t.length ? '' : ' disabled'}>${s.titre}</button><span class="m">${info}</span>
+        ${t.length > 1 ? `<div class="alt">${t.map(x => `<button data-k="${x.v}" class="${on && x.v === sel.v ? 'on' : ''}">${label(s, x.v)}</button>`).join('')}</div>` : ''}</div>
+        <div class="links">${sel ? `<a href="${sel.url}" download="${s.titre}${sel.v ? ' - ' + label(s, sel.v) : ''}.mp3" aria-label="Télécharger" title="Télécharger le MP3">${DL}</a>` : ''}${s.id ? `<a href="chant.html?c=${s.id}" aria-label="Partition" title="Partition">${SC}</a>` : ''}</div></li>`;
+    }).join('');
+    $('pp').innerHTML = au.paused ? PLAY : PAUSE;
+  }
+  function start(i, k, at = 0, play = true) {
+    const s = NOEL[i], t = tracks(s, voice), x = t.find(x => x.v === k) || t[0];
+    if (!x) return;
+    cur = i; curV = x.v;
+    au.src = x.url;
+    if (at) au.addEventListener('loadedmetadata', () => { au.currentTime = at; }, { once: true });
+    if (play) au.play().catch(() => {});
+    $('bar').hidden = false;
+    const name = s.titre + (x.v ? ' · ' + label(s, x.v) : '');
+    $('nowT').textContent = name;
+    if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: name, artist: 'Chœur scout Adjuva Nos', album: 'Concert de Noël', artwork: [{ src: 'noel/affiche.jpg', sizes: '1413x2000', type: 'image/jpeg' }] });
+    render();
+  }
+  const toggle = () => (au.paused ? au.play().catch(() => {}) : au.pause());
+  const step = d => { for (let i = cur + d; i >= 0 && i < NOEL.length; i += d) if (tracks(NOEL[i], voice).length) return start(i); };
+  $('voices').onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    voice = b.dataset.v;
+    try { localStorage.setItem('noel-voix', voice); } catch {}
+    // même chant, même endroit, nouvelle voix
+    if (cur >= 0 && !NOEL[cur].audio) start(cur, voice, au.currentTime, !au.paused); else render();
+  };
+  $('list').onclick = e => {
+    const li = e.target.closest('.song'), b = e.target.closest('button');
+    if (!b) return;
+    const i = +li.dataset.i;
+    if (b.dataset.k) start(i, b.dataset.k, i === cur ? au.currentTime : 0);
+    else if (i === cur) toggle();
+    else start(i);
+  };
+  $('pp').onclick = toggle; $('prev').onclick = () => step(-1); $('next').onclick = () => step(1);
+  const fmt = t => (isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '0:00');
+  au.onplay = au.onpause = render;
+  au.onended = () => step(1);
+  au.ontimeupdate = () => { $('cur').textContent = fmt(au.currentTime); $('dur').textContent = fmt(au.duration); if (au.duration) $('seek').value = au.currentTime / au.duration * 1000; };
+  $('seek').oninput = e => { if (au.duration) au.currentTime = e.target.value / 1000 * au.duration; };
+  if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('previoustrack', () => step(-1)); navigator.mediaSession.setActionHandler('nexttrack', () => step(1)); }
+
+  // flocons dorés de l'affiche
+  const arm = '<path d="M50 50V6M50 18 40 8M50 18 60 8M50 30 38 18M50 30 62 18"/>';
+  const flake = [0, 45, 90, 135, 180, 225, 270, 315].map(a => `<g transform="rotate(${a} 50 50)">${arm}</g>`).join('');
+  $('flakes').innerHTML = [[72, 8, 90], [94, 30, 150], [46, 62, 70], [88, 78, 110], [60, 92, 60]].map(([x, y, w]) =>
+    `<svg viewBox="0 0 100 100" width="${w}" height="${w}" style="left:${x}%;top:${y}%" fill="none" stroke="currentColor" stroke-width="2">${flake}</svg>`).join('');
+  render();
+})();
+</script>
+<script src="assets/pwa.js?v=1"></script>
+</body>
+</html>

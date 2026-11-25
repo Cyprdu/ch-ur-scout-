@@ -188,7 +188,7 @@ def build_song(song):
 
 
 # Fichiers gardés hors ligne par sw.js (le studio, qui demande le serveur local, en est exclu)
-OFFLINE_SKIP = {'sw.js', 'precache.js', 'serveur-local.bat', 'synchro.html', 'assets/synchro.js', 'assets/studio.css'}
+OFFLINE_SKIP = {'sw.js', 'precache.js', 'serveur-local.bat', 'synchro.html', 'assets/synchro.js', 'assets/studio.css', 'noel-export.html'}
 
 
 def write_precache():
@@ -198,7 +198,7 @@ def write_precache():
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ('sources', 'node_modules')]
         for f in files:
             rel = os.path.relpath(os.path.join(dirpath, f), SITE).replace(os.sep, '/')
-            if f.startswith('.') or rel in OFFLINE_SKIP or f.endswith(('.md', '.jsonc')): continue
+            if f.startswith('.') or rel in OFFLINE_SKIP or (rel.startswith('noel/') and f.endswith('.mp3')) or f.endswith(('.md', '.jsonc')): continue
             revs[rel] = hashlib.md5(open(os.path.join(dirpath, f), 'rb').read()).hexdigest()[:10]
     with open(os.path.join(SITE, 'precache.js'), 'w', encoding='utf-8') as out:
         out.write('self.PRECACHE = ' + json.dumps(dict(sorted(revs.items())), indent=0) + ';' + chr(10))

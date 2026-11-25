@@ -522,5 +522,229 @@
         ]
       ]
     }
+  },
+  {
+    "id": "maintenant-seigneur",
+    "file": "maintenant",
+    "title": "Maintenant, Seigneur",
+    "category": "Veillée de Noël",
+    "authors": "Paroles d'après Lc 2, 29-32 et musique : Sœur Luce Martens · © Éditions de l'Emmanuel",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 66,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 2,
+      "intro": [
+        [
+          0,
+          5.75
+        ]
+      ],
+      "couplet": {
+        "*": [
+          [
+            5.75,
+            14
+          ]
+        ]
+      },
+      "between": [
+        [
+          0,
+          5.75
+        ]
+      ],
+      "last": [
+        [
+          0,
+          5.75
+        ]
+      ]
+    }
+  },
+  {
+    "id": "venez-tous-accourez",
+    "file": "venez",
+    "title": "Venez tous, accourez",
+    "category": "Veillée de Noël",
+    "authors": "Musique : Benoît Collet",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 115,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 4,
+      "couplet": {
+        "*": [
+          [
+            0,
+            15.5
+          ]
+        ]
+      }
+    }
+  },
+  {
+    "id": "il-est-au-milieu-de-nous",
+    "file": "milieu",
+    "title": "Il est au milieu de nous",
+    "category": "Veillée de Noël",
+    "authors": "Paroles et musique : Thibault Fromant (Ad Dei Gloriam)",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 120,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 3,
+      "intro": [
+        [
+          0,
+          9
+        ]
+      ],
+      "couplet": {
+        "*": [
+          [
+            9,
+            26
+          ]
+        ]
+      },
+      "between": [
+        [
+          1,
+          9
+        ]
+      ],
+      "last": [
+        [
+          1,
+          9
+        ]
+      ]
+    }
+  },
+  {
+    "id": "l-eveil-du-salut",
+    "file": "eveil",
+    "title": "L'éveil du Salut",
+    "category": "Veillée de Noël",
+    "authors": "Texte : Baudouin Tertrais · Musique : Jean de la Charie",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 85,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 5,
+      "intro": [
+        [
+          0,
+          12
+        ]
+      ],
+      "couplet": {
+        "1": [
+          [
+            12,
+            20
+          ]
+        ],
+        "2": [
+          [
+            20,
+            28.5
+          ]
+        ],
+        "3": [
+          [
+            12,
+            20
+          ]
+        ],
+        "4": [
+          [
+            20,
+            28.5
+          ]
+        ],
+        "5": [
+          [
+            12,
+            20
+          ]
+        ]
+      },
+      "between": [
+        [
+          0,
+          12
+        ]
+      ],
+      "last": [
+        [
+          0,
+          12
+        ]
+      ],
+      "outro": [
+        [
+          28.5,
+          36.75
+        ]
+      ]
+    }
+  },
+  {
+    "id": "la-nativite",
+    "file": "nativite",
+    "title": "La Nativité",
+    "category": "Veillée de Noël",
+    "authors": "3e mystère joyeux · Texte : Pauline Riobée · Musique : Jacques Montagne",
+    "voices": [
+      "S",
+      "A",
+      "T",
+      "B"
+    ],
+    "tempo": {
+      "bpm": 90,
+      "unit": 0.25
+    },
+    "structure": {
+      "verses": 1,
+      "couplet": {
+        "*": [
+          [
+            0,
+            48.0
+          ]
+        ]
+      }
+    }
   }
 ]

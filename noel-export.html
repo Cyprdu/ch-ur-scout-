@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Export des voix — Noël</title>
+<style>
+body{font:16px/1.5 system-ui,sans-serif;max-width:720px;margin:32px auto;padding:0 16px;background:#1a1a1a;color:#fff}
+button{font:600 15px system-ui;padding:8px 16px;border:0;border-radius:8px;background:#b49a5a;color:#1a1a1a;cursor:pointer}
+button:disabled{opacity:.4}
+li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #333}
+ol{padding:0;list-style:none} small{color:#bbb}
+iframe{position:fixed;left:-9999px;width:1000px;height:700px}
+</style>
+</head>
+<body>
+<h1>Exporter les voix du concert de Noël</h1>
+<p>Après avoir publié une synchro, cliquez « Exporter » sur le chant : la page Noël est mise à jour (une piste par voix, piano par-dessus le chœur).</p>
+<button id="all">Tout exporter</button>
+<ol id="list"></ol>
+<script src="chants.js"></script>
+<script src="noel/programme.js"></script>
+<script>
+const list = document.getElementById('list'), sleep = ms => new Promise(r => setTimeout(r, ms));
+const jobs = [];
+let busy = false;
+for (const s of NOEL.filter(s => s.id)) {
+  const li = document.createElement('li'), b = document.createElement('button'), t = document.createElement('span');
+  t.append(s.titre + ' ', Object.assign(document.createElement('small'), {}));
+  b.textContent = 'Exporter'; li.append(t, b); list.append(li);
+  const say = x => { t.querySelector('small').textContent = x; };
+  const job = async () => {
+    const f = document.createElement('iframe');
+    f.src = 'chant.html?c=' + s.id;
+    document.body.append(f);
+    try {
+      let x, n = 0;
+      while (!(x = f.contentWindow.choraleExport)) { if (n++ > 150) throw new Error('le lecteur ne démarre pas'); await sleep(200); }
+      // en arrière-plan, le navigateur ralentit setTimeout à 1 par seconde : on passe par un MessageChannel
+      const w = f.contentWindow, st = w.setTimeout.bind(w);
+      w.setTimeout = (fn, d = 0, ...a) => { if (d > 20 || typeof fn !== 'function') return st(fn, d, ...a); const c = new MessageChannel(); c.port1.onmessage = () => { c.port1.close(); fn(...a); }; c.port2.postMessage(0); return 0; };
+      let i = 0;
+      for (const v of x.voices) {
+        i++;
+        const blob = await x.render(v, p => say(`${v} (${i}/${x.voices.length}) — ${p}`));
+        const r = await fetch(`/api/noel/${s.id}/${v}/${x.choir ? 1 : 0}`, { method: 'POST', body: blob });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.error);
+      }
+      say('✓ exporté ' + (x.choir ? '(chœur + piano)' : '(piano seul : pas encore synchronisé)'));
+    } catch (e) { console.error(e); say('✗ ' + e.message); }
+    f.remove();
+  };
+  jobs.push(job);
+  b.onclick = async () => { if (busy) return; busy = true; await job(); busy = false; };
+}
+document.getElementById('all').onclick = async () => { if (busy) return; busy = true; for (const j of jobs) await j(); busy = false; document.title = 'Export terminé'; };
+</script>
+</body>
+</html>

@@ -9,6 +9,7 @@ usage : python studio.py [port]          (par défaut 8765)
 - /api/audio/<id>/peaks       : forme d'onde et attaques de l'audio d'une vidéo YouTube
                                 (téléchargé avec yt-dlp, décodé avec ffmpeg, mis en cache).
 """
+import hashlib
 import json, os, re, shutil, subprocess, sys, threading, time, webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -236,7 +237,30 @@ class Handler(SimpleHTTPRequestHandler):
             os.makedirs(ARCHIVE, exist_ok=True)
             shutil.copy2(path, os.path.join(ARCHIVE, f'{chant}-{time.strftime("%Y%m%d-%H%M%S")}.json'))
 
+    def save_noel(self, chant, voice, choir):
+        """noel-export.html : MP3 d'une voix -> site/noel/, et liste des pistes dans site/noel/pistes.js"""
+        try:
+            self.chant_dir(chant)
+            body = self.rfile.read(int(self.headers.get('Content-Length') or 0))
+            d = os.path.join(SITE, 'noel')
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(d, f'{chant}-{voice}.mp3'), 'wb') as f:
+                f.write(body)
+            path, head = os.path.join(d, 'pistes.js'), 'window.PISTES = '
+            t = json.loads(open(path, encoding='utf-8').read()[len(head):].rstrip().rstrip(';')) if os.path.exists(path) else {}
+            e = t.setdefault(chant, {'voices': {}})
+            e['choir'] = choir == '1'
+            e['voices'][voice] = hashlib.md5(body).hexdigest()[:8]
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(head + json.dumps(t, ensure_ascii=False, indent=1) + ';')
+            return self.send_json({'ok': True, 'size': len(body)})
+        except Exception as ex:  # noqa: BLE001
+            return self.send_json({'error': str(ex)}, 400)
+
     def do_POST(self):
+        m = re.match(r'^/api/noel/([a-z0-9-]+)/(\w+)/([01])$', self.path)
+        if m:
+            return self.save_noel(*m.groups())
         if self.path != '/api/publish':
             return self.send_json({'error': 'inconnu'}, 404)
         try:
