@@ -730,7 +730,7 @@ window.CHANTS = [
     ]
    ]
   },
-  "video": false,
+  "video": true,
   "nPages": 3
  },
  {
