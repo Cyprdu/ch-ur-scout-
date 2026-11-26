@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Télécommande du concert</title>
+<meta name="theme-color" content="#1a1a1a">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="noel/pochette-512.jpg">
+<style>
+:root { --bg: #1a1a1a; --line: #3a3733; --or: #c9ad68; --or2: #91804f; --mut: #b9b4aa; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: #fff; font: 16px/1.45 system-ui, sans-serif; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+.top { display: flex; justify-content: space-between; align-items: center; color: var(--mut); font-size: 14px; }
+.st { display: flex; align-items: center; gap: 8px; }
+.st i { width: 9px; height: 9px; border-radius: 50%; background: #c0392b; }
+.st.ok i { background: #3fb950; }
+.cur { margin: 18px 0 6px; padding: 18px; border: 1.5px solid var(--or); border-radius: 14px; }
+.cur small { color: var(--or); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+.cur b { display: block; font-size: 24px; line-height: 1.25; margin-top: 4px; }
+.nx { color: var(--mut); font-size: 14.5px; margin: 0 0 14px; }
+.btns { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.btns button { min-height: 92px; border-radius: 14px; font-size: 20px; font-weight: 600; border: 1.5px solid var(--line); }
+.btns #nextB { background: var(--or); color: #1a1a1a; border-color: var(--or); }
+.lock { display: block; width: 100%; margin-top: 12px; min-height: 52px; border-radius: 12px; border: 1px dashed var(--or2); color: var(--or); font-weight: 600; }
+.lock.on { border-style: solid; background: rgba(201, 173, 104, .1); }
+.help { color: var(--mut); font-size: 13.5px; margin: 8px 2px 0; }
+ol { list-style: none; padding: 0; margin: 22px 0 0; border-top: 1px solid var(--line); }
+ol button { display: flex; gap: 10px; width: 100%; text-align: left; padding: 11px 6px; border-bottom: 1px solid var(--line); color: var(--mut); font-size: 15px; }
+ol button.c { color: #fff; font-weight: 500; }
+ol button.on { color: #1a1a1a; background: var(--or); border-radius: 8px; }
+ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
+.err { margin-top: 14px; padding: 12px; border-radius: 10px; background: #5c1f1f; }
+</style>
+</head>
+<body>
+<div class="top"><span>Télécommande · Concert de Noël</span><span class="st" id="st"><i></i><span id="stT">connexion…</span></span></div>
+<div class="err" id="err" hidden></div>
+<div class="cur"><small>En ce moment</small><b id="curT">—</b></div>
+<p class="nx" id="nxT"></p>
+<div class="btns"><button id="prevB" aria-label="Étape précédente">◀</button><button id="nextB">Suivant ▶</button></div>
+<button class="lock" id="lockB"></button>
+<p class="help" id="help"></p>
+<ol id="list"></ol>
+<audio id="au" loop playsinline></audio>
+
+<script src="noel/programme.js"></script>
+<script src="paroles/deroule.js"></script>
+<script src="paroles/live.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), au = $('au');
+  // le code est dans l'adresse après « # » (jamais envoyé ailleurs qu'au serveur du site)
+  const K = new URLSearchParams(location.hash.slice(1)).get('k') || '';
+  const name = (x, i) => (x.chant ? `${x.chant}. ${NOEL[x.chant - 1].titre}` : x.saynete ? `Saynète · ${x.saynete}` : x.accueil || x.fin || `Étape ${i + 1}`);
+  let cur = -1, sending = false, want = null, lockOn = false;
+
+  function render() {
+    $('curT').textContent = cur >= 0 ? name(DEROULE[cur], cur) : 'Pas commencé';
+    const nx = DEROULE[cur + 1];
+    $('nxT').textContent = nx ? 'Ensuite : ' + name(nx, cur + 1) : 'Fin du déroulé';
+    $('list').innerHTML = DEROULE.map((x, i) => `<li><button data-i="${i}" class="${x.chant ? 'c' : ''}${i === cur ? ' on' : ''}"><span>${i + 1}</span><span>${name(x, i)}</span></button></li>`).join('');
+    $('prevB').disabled = cur <= 0; $('nextB').disabled = cur >= DEROULE.length - 1;
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: cur >= 0 ? name(DEROULE[cur], cur) : 'Pas commencé',
+        artist: nx ? 'Ensuite : ' + name(nx, cur + 1) : 'Fin du déroulé',
+        album: 'Télécommande · Concert de Noël',
+        artwork: [{ src: new URL('noel/pochette-512.jpg', location.href).href, sizes: '512x512', type: 'image/jpeg' }],
+      });
+    }
+  }
+  // envoi au serveur ; les appuis rapides sont regroupés, le dernier gagne
+  async function send(i) {
+    i = Math.max(0, Math.min(DEROULE.length - 1, i));
+    cur = i; render(); want = i;
+    if (sending) return;
+    sending = true;
+    while (want !== null) {
+      const v = want; want = null;
+      try {
+        const r = await fetch('/live/etape', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ k: K, i: v }) });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || r.status);
+        $('err').hidden = true; status(true, j.n);
+      } catch (e) { $('err').textContent = 'Non envoyé : ' + e.message + '. Réessayez.'; $('err').hidden = false; }
+    }
+    sending = false;
+  }
+  const status = (ok, n) => { $('st').className = 'st' + (ok ? ' ok' : ''); $('stT').textContent = ok ? `${n ?? '?'} connecté${n > 1 ? 's' : ''}` : 'hors ligne'; };
+
+  $('nextB').onclick = () => send(cur + 1);
+  $('prevB').onclick = () => send(cur - 1);
+  $('list').onclick = e => { const b = e.target.closest('button'); if (b && confirm('Passer à « ' + name(DEROULE[+b.dataset.i], +b.dataset.i) + ' » ?')) send(+b.dataset.i); };
+
+  // écran verrouillé : un son silencieux en boucle fait apparaître les commandes ⏮ ⏭ du téléphone
+  const SILENCE = (() => { const n = 8000 * 20, b = new DataView(new ArrayBuffer(44 + n)), w = (o, t) => [...t].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+    w(0, 'RIFF'); b.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, 8000, true); b.setUint32(28, 8000, true); b.setUint16(32, 1, true); b.setUint16(34, 8, true); w(36, 'data'); b.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) b.setUint8(44 + i, 128);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' })); })();
+  function lockUI() {
+    $('lockB').className = 'lock' + (lockOn ? ' on' : '');
+    $('lockB').textContent = lockOn ? '✓ Commandes sur l’écran verrouillé activées' : 'Activer les commandes sur l’écran verrouillé';
+    $('help').textContent = lockOn ? 'Verrouillez le téléphone : ⏭ = suivant, ⏮ = précédent. Le titre affiché est l’étape en cours.' : 'À activer avant le concert. Laissez cette page ouverte.';
+  }
+  $('lockB').onclick = () => {
+    if (lockOn) { au.pause(); lockOn = false; return lockUI(); }
+    au.src = SILENCE; au.play().then(() => { lockOn = true; lockUI(); render(); }).catch(e => alert('Impossible : ' + e.message));
+  };
+  au.onpause = () => { if (lockOn) au.play().catch(() => { lockOn = false; lockUI(); }); };   // le téléphone ne doit pas couper le lecteur
+  if ('mediaSession' in navigator) {
+    const on = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch {} };
+    on('nexttrack', () => send(cur + 1)); on('previoustrack', () => send(cur - 1));
+    on('play', () => au.play()); on('pause', () => {});   // « pause » ne coupe pas la télécommande
+  }
+
+  if (!K) { $('err').textContent = 'Adresse incomplète : utilisez le lien de télécommande complet (avec #k=…).'; $('err').hidden = false; }
+  const live = liveConnect(e => { if (!sending && want === null) { cur = e.i; render(); } status(true, e.n); });
+  window.addEventListener('offline', () => status(false));
+  lockUI(); render();
+})();
+</script>
+</body>
+</html>

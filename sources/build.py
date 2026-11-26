@@ -188,7 +188,7 @@ def build_song(song):
 
 
 # Fichiers gardés hors ligne par sw.js (le studio, qui demande le serveur local, en est exclu)
-OFFLINE_SKIP = {'sw.js', 'precache.js', 'serveur-local.bat', 'synchro.html', 'assets/synchro.js', 'assets/studio.css', 'noel-export.html'}
+OFFLINE_SKIP = {'sw.js', 'precache.js', 'serveur-local.bat', 'synchro.html', 'assets/synchro.js', 'assets/studio.css', 'noel-export.html', 'worker.js', 'telecommande.html'}
 
 
 def write_precache():

@@ -3,5 +3,11 @@
   "name": "chorale-lyon",
   "compatibility_date": "2026-10-06",
   "observability": { "enabled": true },
-  "assets": { "directory": "." }
+  // fichiers du site ; worker.js ne reçoit que ce qui n'en est pas un (/live/… : direct du concert)
+  "main": "worker.js",
+  "assets": { "directory": ".", "binding": "ASSETS" },
+  "durable_objects": { "bindings": [{ "name": "DIRECT", "class_name": "Direct" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Direct"] }],
+  // empreinte SHA-256 du code de la télécommande (le code lui-même n'est pas dans le dépôt)
+  "vars": { "TELECOMMANDE_HASH": "6026bdb1a729d3121cb2ef5a1316fcddd77b1ecd417e7e29d3c28d2790c58dce" }
 }

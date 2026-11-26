@@ -1,0 +1,80 @@
+/* Paroles des chants du concert de Noël, tirées des partitions (et du texte fourni pour Les 3 routes).
+   « t » : titre de la partie, « l » : lignes, « r » : refrain (affiché en italique). */
+window.TEXTES = {
+  'trois-routes': [
+    { t: 'Refrain', r: 1, l: ['E Ultreïa, E Ultreïa,', 'E Ultreïa, E Ultreïa,', 'Santiago, Santiago !'] },
+    { t: 'Couplet 1', l: ['De Vézelay, du Mont-Saint-Michel', 'Au Puy-en-Velay, Ostabat.'] },
+    { t: 'Couplet 2', l: ['Nous marchons tout le long des grèves', 'Par saint Jacques le Majeur, en avant.'] },
+    { t: 'Couplet 3', l: ['Nous allons par les monts de France', 'Par saint Martin de Touraine, en avant.'] },
+    { t: 'Couplet 4', l: ['Nous chantons à en perdre haleine', 'Sainte Cécile, écoute-nous, en avant.'] },
+    { t: 'Couplet 5', l: ['Nous t’invoquons dans nos prières', 'Marie-Madeleine, soutiens-nous, en avant.'] },
+  ],
+  'dirige-moi-par-ta-verite': [
+    { t: 'Refrain', r: 1, l: ['Dirige-moi par ta vérité,', 'Enseigne-moi car tu es mon Dieu.', 'C’est toi que j’espère tout le jour,', 'En raison de ta bonté, Seigneur.'] },
+    { t: 'Couplet 1', l: ['Regarde, Seigneur, et prends pitié de moi,', 'De moi qui suis seul et misérable.', 'Vois ma misère et vois ma peine,', 'Enlève tous mes nombreux péchés.'] },
+    { t: 'Couplet 2', l: ['Oublie les révoltes, les péchés de ma jeunesse,', 'Dans ton amour, ne m’oublie pas.', 'J’ai les yeux tournés vers le Seigneur,', 'Il tirera mes pieds du filet.'] },
+    { t: 'Couplet 3', l: ['Est-il un homme qui craigne Dieu ?', 'Le Seigneur lui montre le vrai chemin.', 'Son âme habitera le bonheur,', 'Ses descendants posséderont la terre.'] },
+  ],
+  'le-lion': [
+    { t: 'Couplet 1', l: ['Comme la terre tournée vers le ciel', 'Espère la pluie et le soleil,', 'Mon âme vers lui se redresse.', 'Je vois la mystérieuse croix', 'Où est cloué un nouveau Ciel', 'Que reconnaît soudain mon âme.', 'Je vois le sang comme une pluie', 'Qui réunit le Ciel à la terre,', 'Je vois ce cœur, le grand secret.'] },
+    { t: 'Couplet 2', l: ['L’obscurité tout autour se fait,', 'Mes ennemis m’ont encerclé,', 'Nulle sortie, nulle lumière.', 'Je vois la mystérieuse croix', 'Où est cloué un nouveau Ciel,', 'Mes ennemis frémissent et ragent.', 'Qui s’abaisse sera élevé,', 'Qui s’oublie sera exalté,', 'Oui, qui se donne aura la vie.'] },
+    { t: 'Refrain', r: 1, l: ['Le lion s’est fait si faible agneau,', 'Les anges acclament le grand roi,', 'In excelsis !', 'Le plus fort au service des plus petits,', 'Le serviteur suprême, véritable amour.'] },
+    { t: 'Couplet 3', l: ['Derrière la nuit brille', 'Le lion au cœur d’agneau qui m’espère.', 'Derrière les vanités du monde,', 'Derrière les faux ciels, les faux lions,', 'Il est invisible et pourtant', 'Avec puissance il s’élance', 'Vers le cœur assoiffé d’être aimé.', 'Son rugissement fait lever', 'L’aurore, les blés, les enfants,', 'Les montagnes dansent devant lui.'] },
+  ],
+  'je-ne-t-ai-point-cherche': [
+    { t: 'Couplet 1', l: ['Je ne t’ai point cherché en vain, ô mon Seigneur,', 'Aux appels de mon cœur tu t’es laissé trouver.', 'Tu es la source vive où boit ton serviteur,', 'Le fleuve qui emporte mon âme assoiffée.'] },
+    { t: 'Couplet 2', l: ['Jour et nuit, j’ai prié et tu m’as visité.', 'Tu fis descendre en moi ton Esprit de Sagesse.', 'Aux sceptres et aux trônes je t’ai préféré', 'Et j’ai tenu pour rien les biens et les richesses.'] },
+    { t: 'Couplet 3', l: ['Je me suis abrité tout contre toi, Jésus.', 'Sur ton cœur, ô mon Dieu, ma tête a reposé.', 'Et ta voix me disait : « Adam, où étais-tu ?', 'Partout je t’ai cherché, pourquoi as-tu tardé ? »'] },
+    { t: 'Couplet 4', l: ['Ô beauté si ancienne, ô beauté si nouvelle,', 'Bien tard je t’ai aimée et t’ai donné ma vie.', 'Au dehors de moi-même je t’ai poursuivie', 'Mais tu étais en moi, Vérité éternelle !'] },
+    { t: 'Couplet 5', l: ['Plus intérieur à moi que moi-même, ô Seigneur,', 'Je te découvre enfin : présence où je m’oublie.', 'Hôte très doux de l’âme, sceau brûlant du cœur,', 'Je te rends gloire, ô Père, Fils et Saint-Esprit.'] },
+  ],
+  'l-eveil-du-salut': [
+    { t: 'Refrain', r: 1, l: ['Bercé par la tendresse', 'De Marie, de Joseph,', 'L’enfant Jésus s’endort', 'Et le salut s’éveille !', 'Gloria in excelsis Deo !'] },
+    { t: 'Couplet 1', l: ['Toute peur, tout espoir', 'Devant ta paix s’efface,', 'Plus de trouble en mon cœur :', 'Ta grandeur me dépasse !'] },
+    { t: 'Couplet 2', s: 'Réponse de l’enfant Jésus', l: ['N’aie crainte, mon enfant,', 'Contemple le mystère', 'D’un Dieu fait tout petit', 'Pour porter ta misère.'] },
+    { t: 'Couplet 3', l: ['Si pauvre parmi les pauvres,', 'Vêtu d’humilité,', 'Tu mendies mon amour,', 'Jésus, je veux t’aimer !'] },
+    { t: 'Couplet 4', s: 'Réponse de l’enfant Jésus', l: ['Regarde bien ma mère,', 'Écoute son silence,', 'Toute pleine de grâce,', 'Vers Dieu son cœur s’élance.'] },
+    { t: 'Couplet 5', l: ['Seigneur, comment te suivre ?', 'Si petit, démuni,', 'Seul ton regard me sauve', 'Car il est infini !'] },
+    { t: 'Final', l: ['Contre toute évidence,', 'Je suis ton espérance,', 'L’Éternel en silence', 'Est entré dans le temps !'] },
+  ],
+  'venez-tous-accourez': [
+    { t: 'Couplet 1', l: ['Tout le ciel s’emplit d’une joie nouvelle,', 'On entend la nuit dire la merveille.', 'Fête sans pareille, le Sauveur est né,', 'L’Enfant-Dieu nous est donné !'] },
+    { t: 'Refrain', r: 1, l: ['Venez tous, accourez à la crèche,', 'Venez adorer,', 'Car l’enfant qui y est couché', 'Est le Roi du Ciel.', 'Il vient pour nous sauver', 'De la mort et du péché,', 'Car il vient pour nous emmener', 'Vers la Vie éternelle !'] },
+    { t: 'Couplet 2', l: ['Le Seigneur paraît, Verbe de lumière,', 'L’univers connaît la bonté du Père.', 'Dieu sur notre terre vient tracer la voie', 'Où chemineront nos pas !'] },
+    { t: 'Couplet 3', l: ['Avec les bergers, avec tous les sages,', 'C’est le monde entier qui vers lui s’engage', 'Pour voir le visage de l’Amour vivant', 'Qui pour nous s’est fait enfant !'] },
+    { t: 'Couplet 4', l: ['Gloire à Jésus-Christ, gloire au Fils du Père,', 'Gloire à son Esprit dont l’Amour éclaire.', 'L’éclatant mystère qui remplit le Ciel :', 'Gloire à l’Homme-Dieu, Noël !'] },
+  ],
+  'la-nativite': [
+    { t: 'Ouverture', l: ['La nuit tombe, tombe sur le petit troupeau,', 'Dors, dors, dors en cette douce nuit.'] },
+    { t: 'Refrain', r: 1, l: ['Grande joie, ô bonne nouvelle,', 'Il est né le Sauveur !'] },
+    { t: 'Couplet 1', l: ['Allons à Bethléem pour voir le nouveau-né.', 'Quel est ce doux enfant', 'Que Dieu nous a donné ?'] },
+    { t: 'Couplet 2', l: ['Il est là, il dort, son visage est si beau,', 'Dors, dors, dors en cette douce nuit.'] },
+    { t: 'Couplet 3', l: ['Allons autour de nous raconter l’événement.', 'Grande joie sur la terre,', 'Un Sauveur nous est né.', 'Grande joie, ô bonne nouvelle,', 'C’est le Christ, le Seigneur !'] },
+    { t: 'Final', l: ['Entrez, venez l’adorer,', 'Il est le Roi des anges,', 'Il est lumière née de la lumière,', 'Il est Dieu né du vrai Dieu.', 'Entrez, adorez, adorez !'] },
+  ],
+  'glorificamus-te': [
+    { t: 'Refrain', r: 1, l: ['Veni Sancte Spiritus,', 'Veni Sancte Spiritus,', 'Veni Sancte Spiritus,', 'Glorificamus te !'] },
+    { t: 'Couplet 1', l: ['Viens, Esprit de Dieu, et nous serons humbles et pauvres.', 'Viens nous apprêter à hériter de ton Royaume.', 'Viens nous fortifier dans la douleur et dans l’épreuve.', 'Viens nous abreuver de ton eau vive.'] },
+    { t: 'Couplet 2', l: ['Viens, Esprit de Dieu, mettre ta paix dans la discorde.', 'Viens, nous serons doux, nous obtiendrons miséricorde.', 'Viens et nous serons des artisans de paix sur terre.', 'Viens donner la joie qui vient du Père.'] },
+    { t: 'Couplet 3', l: ['Viens, Esprit de Dieu, et sanctifie nos sacrifices.', 'Viens nous soutenir dans nos combats pour la justice.', 'Viens, rends nos cœurs purs et nous verrons l’éclat du Père.', 'Viens, éclaire-nous de sa lumière.'] },
+    { t: 'Doxologie', l: ['Deo Patri sit gloria,', 'Et Filio, qui a mortuis surrexit,', 'Ac Paraclito', 'In sæculorum sæcula.', 'Amen.'] },
+  ],
+  'il-est-au-milieu-de-nous': [
+    { t: 'Refrain', r: 1, l: ['Il est présent parmi nous puisqu’il nous aime,', 'Il s’est sacrifié pour nous, Dieu ressuscité !', 'Oui, par son Baptême,', 'Il est au milieu de nous.'] },
+    { t: 'Couplet 1', l: ['Baptisé par saint Jean-Baptiste,', 'Il invite à la conversion.', 'Par ce baptême, Jésus, le Christ,', 'Nous montre qu’il est avec nous.', 'Ce baptême d’eau vient annoncer', 'L’heure de la Croix où, par amour,', 'Il franchira l’eau de la mort', 'Pour nous faire vivre pour toujours.'] },
+    { t: 'Couplet 2', l: ['Par le Baptême d’eau et d’Esprit,', 'Il nous fait traverser les eaux.', 'Par ce baptême, nous devenons', 'Enfants de Dieu, par son Esprit.', 'Il veut nous faire participer', 'Au mystère de sa Passion.', 'Il veut nous faire participer', 'À sa sainte Résurrection.'] },
+    { t: 'Couplet 3', l: ['Lors du Repas, il institue', 'Le mystère de l’Eucharistie.', 'Il fit cela pour que ma foi', 'Puisse toujours s’abreuver de lui.', 'Mort sur la Croix pour nous sauver,', 'En portant nos nombreux péchés,', 'Lui qui est roi, il nous rachète,', 'Il est vraiment ressuscité.'] },
+  ],
+  'jhesu-maria': [
+    { t: 'Refrain', r: 1, l: ['Jhesu, Maria !', 'Jhesu, Maria !', 'Jhesu, Maria !'] },
+    { t: 'Couplet 1', l: ['C’est pour vous, doux Seigneur, que je vins de Lorraine', 'Au royaume de France sacrer le Dauphin.', 'C’est pour vous, sainte Vierge, qui êtes ma reine,', 'Que je fis ces exploits qui signèrent ma fin.', 'Le Seigneur a voulu dans sa grande clémence', 'Que prît fin, par le bras d’une femme pucelle,', 'La pitié qui se trouve au royaume de France,', 'Comme il fit en son temps pour son peuple Israël.'] },
+    { t: 'Couplet 2', l: ['Je voulais vous servir dès le jour où je vis', 'Au jardin la clarté et que j’ouïs cette voix.', 'À la vue de l’archange mon cœur défaillit', 'Mais j’offris ma personne, âme et corps, à mon Roi.', 'À présent dans les fers, malmenée par ces hommes', 'Qui prétendent parler de par Dieu et l’Église,', 'Hardiment je réponds, et sans crainte je somme', 'Ces faux juges d’entendre ce que mes voix me disent.'] },
+    { t: 'Couplet 3', l: ['Aller à Vaucouleurs et lever des armées,', 'Libérer Orléans puis reprendre la Loire,', 'Couronner le Dauphin, sur mes voix je promets,', 'Tout cela, je l’ai fait de par Dieu, pour sa gloire.', 'Si je suis dans la grâce ? Mais comment le saurais-je ?', 'Si j’y suis, Dieu m’y tienne, voilà ma prière.', 'Mais si je n’y suis pas, qu’il m’y mette et allège', 'De ses fautes ce cœur qui veut voir sa lumière.'] },
+    { t: 'Couplet 4', l: ['Je n’avais nulle haine à l’égard des Anglais,', 'Mon épée au côté, l’étendard à la main,', 'Je clamais à grands cris et par lettre la paix', 'Afin que nul ne tombe au pouvoir du Malin.', 'Mon seul juge est mon Dieu. De mes faits, de mes dires,', 'Je m’en rapporte à lui. Menez-moi au bûcher !', 'Je suis prête à mourir, à souffrir le martyre.', 'Donnez-moi, ô Jésus, votre force cachée !'] },
+  ],
+  'maintenant-seigneur': [
+    { t: 'Refrain', r: 1, l: ['Maintenant, Seigneur,', 'Tu peux me laisser m’en aller dans la paix.', 'Maintenant, Seigneur,', 'Tu peux me laisser reposer.'] },
+    { t: 'Couplet 1', l: ['Tu peux laisser s’en aller ton serviteur', 'En paix selon ta parole,', 'Car mes yeux ont vu le salut', 'Que tu prépares à la face des peuples.'] },
+    { t: 'Couplet 2', l: ['Lumière pour éclairer les nations', 'Et gloire d’Israël ton peuple.', 'Gloire au Père, et au Fils, et au Saint-Esprit', 'Pour les siècles des siècles.'] },
+  ],
+};
