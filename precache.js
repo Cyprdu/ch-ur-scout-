@@ -95,7 +95,7 @@ self.PRECACHE = {
 "noel/pochette-512.jpg": "f3ad1f9806",
 "noel/pochette.jpg": "149d7b30ba",
 "noel/programme.js": "811b513d00",
-"paroles.html": "f67bbc6675",
+"paroles.html": "5ce8bc88b7",
 "paroles/live.js": "2482232e7f",
 "paroles/textes.js": "4cb6ed4dae"
 };

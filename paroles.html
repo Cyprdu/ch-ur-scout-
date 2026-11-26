@@ -30,11 +30,45 @@ h1 { font: 600 clamp(40px, 11vw, 54px)/1 Caveat, cursive; margin: 4px 0 6px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--or); flex: none; animation: pulse 2s infinite; }
 @keyframes pulse { 50% { opacity: .25; } }
 ol { list-style: none; margin: 0; padding: 0; }
-.welcome { margin: 0 0 18px; padding: 18px 18px 20px; border: 1.5px solid var(--or); border-radius: 14px; background: rgba(201, 173, 104, .07); text-align: center; }
-.welcome b { display: block; font: 600 44px/1 Caveat, cursive; color: var(--or); }
-.welcome p { margin: 8px 0 0; color: var(--mut); font-size: 14.5px; }
-.welcome .cd { margin: 12px 0 2px; color: var(--txt); font-size: 15px; }
-.welcome .cd strong { display: block; font-size: 30px; font-weight: 600; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+.welcome { position: relative; margin: 4px 0 22px; padding: 26px 20px 22px; border: 1px solid var(--or2); border-radius: 18px; text-align: center; overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(201, 173, 104, .16), rgba(201, 173, 104, .03) 60%, transparent); }
+.welcome::before, .welcome::after { content: ''; position: absolute; top: 16px; width: 24px; height: 24px; opacity: .55;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23c9ad68' stroke-width='5'%3E%3Cpath d='M50 4v92M10 27l80 46M10 73l80-46M50 18 40 8M50 18 60 8M50 82 40 92M50 82 60 92'/%3E%3C/svg%3E") center/contain no-repeat; }
+.welcome::before { left: 18px; } .welcome::after { right: 18px; }
+.welcome .hi { display: block; font: 600 56px/1 Caveat, cursive; color: var(--or); }
+.welcome .lead { margin: 8px 0 0; font-size: 16px; font-weight: 500; }
+.welcome.started .lead { font: 600 36px/1.15 Caveat, cursive; margin-top: 14px; }
+.cd { display: flex; justify-content: center; align-items: flex-start; gap: 6px; margin: 16px 0 2px; font-variant-numeric: tabular-nums; }
+.cd b { font-weight: 600; }
+.cd span { min-width: 76px; padding: 8px 6px 6px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0, 0, 0, .25); font-size: 38px; line-height: 1.1; }
+.cd span small { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--mut); }
+.cd i { font-style: normal; font-size: 34px; line-height: 1.5; color: var(--or); }
+.orn { display: flex; align-items: center; gap: 10px; margin: 18px 6px 14px; color: var(--or); font-size: 13px; }
+.orn::before, .orn::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--or2)); }
+.orn::after { background: linear-gradient(90deg, var(--or2), transparent); }
+.rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; text-align: left; }
+.rules li { display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: var(--mut); }
+.rules svg { flex: none; width: 34px; height: 34px; padding: 7px; border-radius: 50%; border: 1px solid var(--or2); color: var(--or); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.welcome .foot { margin: 16px 0 0; font-size: 13px; color: var(--mut); font-style: italic; }
+/* changement de chant en direct */
+.trans { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(20, 20, 20, .88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0; transition: opacity .5s ease; }
+.trans.on { opacity: 1; }
+.tc { text-align: center; padding: 0 28px; transform: translateY(14px); transition: transform 1s cubic-bezier(.2, .7, .2, 1); }
+.trans.on .tc { transform: none; }
+.tc svg { width: 46px; height: 46px; color: var(--or); animation: spin 9s linear infinite; }
+.tc small { display: block; margin-top: 14px; font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--or); }
+.tc .tn { display: block; margin-top: 6px; font: 600 92px/.9 Caveat, cursive; color: var(--or); }
+.tc .tt { display: block; max-width: 16em; margin: 8px auto 0; font-size: 23px; font-weight: 600; line-height: 1.25; }
+.tc .ln { width: 0; height: 1px; margin: 18px auto 0; background: var(--or); transition: width 1.3s cubic-bezier(.2, .7, .2, 1) .2s; }
+.trans.on .ln { width: 90px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.in > * { animation: rise .7s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+.song.arrive { animation: arrive 1.6s ease-out; }
+@keyframes arrive { 0% { box-shadow: 0 0 0 0 rgba(201, 173, 104, .55); background: rgba(201, 173, 104, .28); } 100% { box-shadow: 0 0 0 14px rgba(201, 173, 104, 0); } }
+.pill.pop { animation: pop .6s cubic-bezier(.2, .7, .2, 1); }
+@keyframes pop { from { opacity: 0; transform: translateY(16px); } }
+@media (prefers-reduced-motion: reduce) { .trans, .tc, .tc .ln { transition: none; } .tc svg, .in > *, .song.arrive, .pill.pop { animation: none; } }
 .song { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 8px 12px 8px 4px; border-bottom: 1px solid var(--line); border-radius: 0; }
 .num { font: 600 38px/1 Caveat, cursive; color: var(--or); text-align: center; }
 .song .t { font-weight: 500; line-height: 1.3; }
@@ -75,7 +109,18 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
     <div class="poster"><img src="noel/affiche.jpg" width="1413" height="2000" alt="Le chœur scout Adjuva Nos présente le concert de Noël"></div>
     <h1>Les paroles</h1>
     <p class="sub">Touchez un chant pour lire ses paroles. Le chant en cours est encadré.</p>
-    <div class="welcome" id="welcome" hidden><b>Bienvenue !</b><p>Le concert va bientôt commencer.<br>Pensez à mettre votre téléphone en silencieux.</p><p class="cd" id="cd"></p></div>
+    <div class="welcome" id="welcome" hidden>
+      <span class="hi">Bienvenue !</span>
+      <p class="lead">Le concert va bientôt commencer</p>
+      <div class="cd" id="cd"><span><b id="cdm">00</b><small>min</small></span><i>:</i><span><b id="cds">00</b><small>s</small></span></div>
+      <div class="orn">✦</div>
+      <ul class="rules">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 10.6-3.8M18 10.5c0 4 2 5.5 2 5.5H8M6 12c-.3 2.6-2 4-2 4h2"/><path d="M10 20a2 2 0 0 0 4 0"/><path d="M3 3l18 18"/></svg>Mettez votre téléphone en silencieux</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg>Baissez la luminosité de votre écran</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 5 14h6l-1 8 8-12h-6l1-8z"/><path d="M3 3l18 18"/></svg>Pas de flash pendant le concert, merci</li>
+      </ul>
+      <p class="foot">Les paroles de chaque chant s’afficheront ici, au fil du concert.</p>
+    </div>
     <div class="now" id="now" hidden></div>
     <ol id="list"></ol>
     <footer>Chœur scout Adjuva Nos · Concert de Noël · Église du Saint-Nom-de-Jésus, Lyon</footer>
@@ -83,6 +128,7 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
   <section id="text" hidden></section>
 </div>
 <button class="pill" id="pill" hidden></button>
+<div class="trans" id="trans" hidden aria-hidden="true"><div class="tc"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" id="tf"></svg><small id="tk"></small><span class="tn" id="tn"></span><span class="tt" id="tt"></span><div class="ln"></div></div></div>
 
 <script src="noel/programme.js"></script>
 <script src="paroles/textes.js"></script>
@@ -107,23 +153,26 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
   // compte à rebours de l'accueil
   function tick() {
     if (!liveStep.accueil) return;
-    const s = Math.round((DEBUT_CONCERT - Date.now()) / 1000);
-    if (s <= 0) { $('cd').innerHTML = '<strong>Installez-vous…</strong>'; return; }
-    const j = Math.floor(s / 86400), h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60, sec = s % 60, z = n => String(n).padStart(2, '0');
-    $('cd').innerHTML = 'Début dans<strong>' + (j ? `${j} j ${h} h ${z(m)} min` : h ? `${h} h ${z(m)} min ${z(sec)} s` : `${m} min ${z(sec)} s`) + '</strong>';
+    const s = Math.max(0, Math.ceil((DEBUT_CONCERT - Date.now()) / 1000)), z = n => String(n).padStart(2, '0');
+    $('welcome').classList.toggle('started', s === 0);
+    $('cd').hidden = s === 0;
+    $('cdm').textContent = z(Math.floor(s / 60)); $('cds').textContent = z(s % 60);
   }
   setInterval(tick, 1000);
-  function renderText(i) {
+  function renderText(i, anim, base = 0) {
     const s = NOEL[i], parts = TEXTES[key(s)] || [];
     const live = i === liveSong;
     $('text').innerHTML = `<div class="bar${live ? ' live' : ''}"><button class="back" id="back" aria-label="Tous les chants"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <div class="ttl"><span class="kick">Chant ${i + 1}</span><h2>${s.titre}</h2></div>${live ? '<span class="onair"><span class="dot"></span>En cours</span>' : ''}</div>
-      <div class="lyrics${live ? ' live' : ''}">${parts.map(p => `<div class="part${p.r ? ' r' : ''}"><h3>${p.t}${p.s ? ` <small>· ${p.s}</small>` : ''}</h3><p>${p.l.map(esc).join('<br>')}</p></div>`).join('')}</div>`;
+      <div class="lyrics${live ? ' live' : ''}${anim ? ' in' : ''}">${parts.map(p => `<div class="part${p.r ? ' r' : ''}"><h3>${p.t}${p.s ? ` <small>· ${p.s}</small>` : ''}</h3><p>${p.l.map(esc).join('<br>')}</p></div>`).join('')}</div>`;
+    if (anim) [...$('text').querySelectorAll('.lyrics > .part')].forEach((el, k) => { el.style.animationDelay = base + Math.min(k, 6) * 70 + 'ms'; });
   }
   // pastille uniquement sur la page d'un chant qui n'est pas celui chanté en ce moment
   function renderPill() {
     const show = open >= 0 && liveSong >= 0 && open !== liveSong;
     $('pill').hidden = !show;
+    if (show && $('pill').dataset.n != liveSong) { $('pill').dataset.n = liveSong; $('pill').classList.remove('pop'); void $('pill').offsetWidth; $('pill').classList.add('pop'); }
+    if (!show) delete $('pill').dataset.n;
     if (show) $('pill').innerHTML = `<span class="dot"></span><span class="txt"><small>En ce moment</small><span class="tt">${NOEL[liveSong].titre}</span></span><span class="go" aria-hidden="true">›</span>`;
   }
   // navigation : #3 = paroles du 3e chant (le bouton « retour » du téléphone fonctionne)
@@ -131,10 +180,10 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
     const m = location.hash.match(/^#(\d+)$/), i = m ? +m[1] - 1 : -1;
     open = NOEL[i] ? i : -1;
     $('home').hidden = open >= 0; $('text').hidden = open < 0;
-    if (open >= 0) { renderText(open); window.scrollTo(0, 0); } else renderList();
+    if (open >= 0) { renderText(open, true, enterDelay); enterDelay = 0; window.scrollTo(0, 0); } else renderList();
     renderPill();
   }
-  let fromList = false;   // arrivé sur les paroles depuis la liste : « retour » = page précédente
+  let fromList = false, enterDelay = 0;   // arrivé sur les paroles depuis la liste : « retour » = page précédente
   const go = i => { fromList = open < 0 && i >= 0; location.hash = i >= 0 ? '#' + (i + 1) : ''; };
   $('list').onclick = e => { const b = e.target.closest('.song'); if (b) go(+b.dataset.i); };
   $('text').onclick = e => {
@@ -143,13 +192,30 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
   $('pill').onclick = () => { if (liveSong >= 0) location.replace('#' + (liveSong + 1)); };
   window.addEventListener('hashchange', route);
 
+  const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let tTimer = 0;
+  // on suivait le chant en direct : petit écran de transition « Chant suivant · 4 · titre »
+  function versChant(n, avant) {
+    if (calme || document.hidden) { location.replace('#' + (n + 1)); return; }
+    const T = $('trans');
+    $('tf').innerHTML = flake;
+    $('tk').textContent = n === avant + 1 ? 'Chant suivant' : 'Et maintenant';
+    $('tn').textContent = n + 1; $('tt').textContent = NOEL[n].titre;
+    clearTimeout(tTimer); T.hidden = false; T.classList.remove('on'); void T.offsetWidth; T.classList.add('on');
+    setTimeout(() => { enterDelay = 1250; location.replace('#' + (n + 1)); }, 650);
+    tTimer = setTimeout(() => { T.classList.remove('on'); tTimer = setTimeout(() => { T.hidden = true; }, 520); }, 1900);
+  }
   liveConnect(e => {
     liveStep = etatDe(e.i);
     liveSong = liveStep.chant && NOEL[liveStep.chant - 1] ? liveStep.chant - 1 : -1;
     // on lisait le chant qui était en direct et on passe au suivant : on suit automatiquement
-    if (open >= 0 && open === lastLive && liveSong >= 0 && liveSong !== open) { if (liveSong >= 0) lastLive = liveSong; location.replace('#' + (liveSong + 1)); return; }
+    if (open >= 0 && open === lastLive && liveSong >= 0 && liveSong !== open) { const avant = open; lastLive = liveSong; versChant(liveSong, avant); return; }
+    const avant = lastLive;
     if (liveSong >= 0) lastLive = liveSong;
-    if (open >= 0) { const y = scrollY; renderText(open); scrollTo(0, y); } else renderList();
+    if (open >= 0) { const y = scrollY; renderText(open); scrollTo(0, y); } else {
+      renderList();
+      if (liveSong >= 0 && liveSong !== avant) { const el = $('list').querySelector('.song.live'); if (el) { el.classList.add('arrive'); setTimeout(() => el.classList.remove('arrive'), 1700); } }
+    }
     renderPill();
   });
 
