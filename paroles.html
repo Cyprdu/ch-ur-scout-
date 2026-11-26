@@ -26,8 +26,7 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .poster::after { content: ''; position: absolute; inset: auto 0 0; height: 30%; background: linear-gradient(transparent, var(--bg)); }
 h1 { font: 600 clamp(40px, 11vw, 54px)/1 Caveat, cursive; margin: 4px 0 6px; }
 .sub { margin: 0 0 18px; color: var(--mut); font-size: 14.5px; }
-.now { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--or2); color: var(--mut); font-size: 14.5px; }
-.now b { color: var(--txt); font-weight: 500; }
+.now { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--or2); color: var(--mut); font-size: 13.5px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--or); flex: none; animation: pulse 2s infinite; }
 @keyframes pulse { 50% { opacity: .25; } }
 ol { list-style: none; margin: 0; padding: 0; }
@@ -39,18 +38,21 @@ ol { list-style: none; margin: 0; padding: 0; }
 .tag { display: inline-block; margin-top: 3px; font-size: 11.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--or); }
 footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: center; }
 /* paroles */
-.back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--or); font-weight: 500; margin-top: 8px; }
-.head { display: flex; align-items: baseline; gap: 12px; margin: 6px 0 4px; }
-.head .num { font-size: 52px; }
-.head h2 { font-size: 24px; font-weight: 600; line-height: 1.2; margin: 0; }
-.live-tag { margin: 0 0 6px; }
+.bar { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 4px; margin: 0 -16px; padding: 8px 16px 8px 6px; padding-top: max(8px, env(safe-area-inset-top)); background: rgba(26, 26, 26, .94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.bar.live { border-bottom-color: var(--or); }
+.back { display: grid; place-items: center; width: 46px; height: 46px; flex: none; border-radius: 50%; color: var(--or); }
+.back svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.back:active { background: rgba(201, 173, 104, .15); }
+.bar .num { font-size: 34px; width: auto; margin-right: 4px; }
+.bar h2 { flex: 1; min-width: 0; margin: 0; font-size: 18px; font-weight: 600; line-height: 1.25; }
+.onair { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 5px 11px; border-radius: 99px; background: rgba(201, 173, 104, .14); color: var(--or); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.lyrics.live { border-left: 2px solid var(--or); padding-left: 14px; margin-left: -16px; }
 .part { margin: 26px 0 0; }
 .part h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--or); }
 .part h3 small { letter-spacing: 0; text-transform: none; font-weight: 400; color: var(--mut); font-size: 13px; }
 .part p { margin: 0; font-size: 18.5px; line-height: 1.6; }
 .part.r p { font-style: italic; }
-.next { display: flex; justify-content: space-between; gap: 12px; margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); }
-.next button { color: var(--mut); font-size: 14.5px; min-height: 44px; }
+.lyrics { padding-bottom: 24px; }
 /* bandeau « en ce moment » quand on lit un autre chant */
 .pill { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 5; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 99px; background: var(--or); color: #1a1a1a; font-weight: 600; font-size: 14.5px; box-shadow: 0 6px 24px rgba(0, 0, 0, .5); white-space: nowrap; }
 .pill span { overflow: hidden; text-overflow: ellipsis; }
@@ -88,21 +90,15 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
       <span class="num" aria-hidden="true">${i + 1}</span>
       <span><span class="t"><span hidden>Chant ${i + 1} : </span>${s.titre}</span>${i === liveSong ? '<br><span class="tag">En ce moment</span>' : ''}</span>
       <span class="go" aria-hidden="true">›</span></button></li>`).join('');
-    const now = $('now');
-    if (liveStep && liveSong < 0 && (liveStep.saynete || liveStep.accueil || liveStep.fin)) {
-      const nx = DEROULE.slice(DEROULE.indexOf(liveStep)).find(x => x.chant);
-      now.innerHTML = '<span class="dot"></span><span>' + (liveStep.saynete ? 'Saynète en cours' : liveStep.fin ? esc(liveStep.fin) : 'Le concert va commencer')
-        + (nx && !liveStep.fin ? ` · prochain chant&nbsp;: <b>${nx.chant}. ${NOEL[nx.chant - 1].titre}</b>` : '') + '</span>';
-      now.hidden = false;
-    } else now.hidden = true;
+    $('now').hidden = !(liveStep && liveStep.saynete);
+    $('now').innerHTML = '<span class="dot"></span>Entre deux chants';
   }
   function renderText(i) {
     const s = NOEL[i], parts = TEXTES[key(s)] || [];
-    $('text').innerHTML = `<button class="back" id="back">‹ Tous les chants</button>
-      <div class="head"><span class="num" aria-hidden="true">${i + 1}</span><h2><span hidden>Chant ${i + 1} : </span>${s.titre}</h2></div>
-      ${i === liveSong ? '<div class="tag live-tag">En ce moment</div>' : ''}
-      ${parts.map(p => `<div class="part${p.r ? ' r' : ''}"><h3>${p.t}${p.s ? ` <small>· ${p.s}</small>` : ''}</h3><p>${p.l.map(esc).join('<br>')}</p></div>`).join('')}
-      <div class="next">${i > 0 ? `<button data-go="${i - 1}">‹ ${NOEL[i - 1].titre}</button>` : '<span></span>'}${i < NOEL.length - 1 ? `<button data-go="${i + 1}" style="text-align:right">${NOEL[i + 1].titre} ›</button>` : ''}</div>`;
+    const live = i === liveSong;
+    $('text').innerHTML = `<div class="bar${live ? ' live' : ''}"><button class="back" id="back" aria-label="Tous les chants"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span class="num" aria-hidden="true">${i + 1}</span><h2>${s.titre}</h2>${live ? '<span class="onair"><span class="dot"></span>En cours</span>' : ''}</div>
+      <div class="lyrics${live ? ' live' : ''}">${parts.map(p => `<div class="part${p.r ? ' r' : ''}"><h3>${p.t}${p.s ? ` <small>· ${p.s}</small>` : ''}</h3><p>${p.l.map(esc).join('<br>')}</p></div>`).join('')}</div>`;
   }
   function renderPill() {
     const show = liveSong >= 0 && open !== liveSong;
@@ -122,7 +118,6 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
   $('list').onclick = e => { const b = e.target.closest('.song'); if (b) go(+b.dataset.i); };
   $('text').onclick = e => {
     if (e.target.closest('#back')) { if (fromList) history.back(); else go(-1); return; }
-    const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go);
   };
   $('pill').onclick = () => go(liveSong);
   window.addEventListener('hashchange', route);
@@ -130,7 +125,7 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
   liveConnect(e => {
     liveStep = DEROULE[e.i] || null;
     liveSong = liveStep && liveStep.chant ? liveStep.chant - 1 : -1;
-    if (open >= 0) renderText(open); else renderList();
+    if (open >= 0) { const y = scrollY; renderText(open); scrollTo(0, y); } else renderList();
     renderPill();
   });
 

@@ -27,6 +27,7 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .btns #nextB { background: var(--or); color: #1a1a1a; border-color: var(--or); }
 .lock { display: block; width: 100%; margin-top: 12px; min-height: 52px; border-radius: 12px; border: 1px dashed var(--or2); color: var(--or); font-weight: 600; }
 .lock.on { border-style: solid; background: rgba(201, 173, 104, .1); }
+.reset { display: block; width: 100%; margin-top: 10px; min-height: 46px; border-radius: 12px; border: 1px solid var(--line); color: var(--mut); font-size: 14.5px; }
 .help { color: var(--mut); font-size: 13.5px; margin: 8px 2px 0; }
 ol { list-style: none; padding: 0; margin: 22px 0 0; border-top: 1px solid var(--line); }
 ol button { display: flex; gap: 10px; width: 100%; text-align: left; padding: 11px 6px; border-bottom: 1px solid var(--line); color: var(--mut); font-size: 15px; }
@@ -43,9 +44,10 @@ ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
 <p class="nx" id="nxT"></p>
 <div class="btns"><button id="prevB" aria-label="Étape précédente">◀</button><button id="nextB">Suivant ▶</button></div>
 <button class="lock" id="lockB"></button>
+<button class="reset" id="resetB">Revenir à « avant le concert » (aucun chant en cours)</button>
 <p class="help" id="help"></p>
 <ol id="list"></ol>
-<audio id="au" loop playsinline></audio>
+<audio id="au" playsinline></audio>
 
 <script src="noel/programme.js"></script>
 <script src="paroles/deroule.js"></script>
@@ -63,7 +65,7 @@ ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
     const nx = DEROULE[cur + 1];
     $('nxT').textContent = nx ? 'Ensuite : ' + name(nx, cur + 1) : 'Fin du déroulé';
     $('list').innerHTML = DEROULE.map((x, i) => `<li><button data-i="${i}" class="${x.chant ? 'c' : ''}${i === cur ? ' on' : ''}"><span>${i + 1}</span><span>${name(x, i)}</span></button></li>`).join('');
-    $('prevB').disabled = cur <= 0; $('nextB').disabled = cur >= DEROULE.length - 1;
+    $('prevB').disabled = cur < 0; $('resetB').disabled = cur < 0; $('nextB').disabled = cur >= DEROULE.length - 1;
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: cur >= 0 ? name(DEROULE[cur], cur) : 'Pas commencé',
@@ -75,7 +77,7 @@ ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
   }
   // envoi au serveur ; les appuis rapides sont regroupés, le dernier gagne
   async function send(i) {
-    i = Math.max(0, Math.min(DEROULE.length - 1, i));
+    i = Math.max(-1, Math.min(DEROULE.length - 1, i));
     cur = i; render(); want = i;
     if (sending) return;
     sending = true;
@@ -94,10 +96,11 @@ ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
 
   $('nextB').onclick = () => send(cur + 1);
   $('prevB').onclick = () => send(cur - 1);
+  $('resetB').onclick = () => { if (confirm('Revenir à « avant le concert » ? Plus aucun chant ne sera en cours.')) send(-1); };
   $('list').onclick = e => { const b = e.target.closest('button'); if (b && confirm('Passer à « ' + name(DEROULE[+b.dataset.i], +b.dataset.i) + ' » ?')) send(+b.dataset.i); };
 
   // écran verrouillé : un son silencieux en boucle fait apparaître les commandes ⏮ ⏭ du téléphone
-  const SILENCE = (() => { const n = 8000 * 20, b = new DataView(new ArrayBuffer(44 + n)), w = (o, t) => [...t].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+  const SILENCE = (() => { const n = 8000 * 600, b = new DataView(new ArrayBuffer(44 + n)), w = (o, t) => [...t].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
     w(0, 'RIFF'); b.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, 8000, true); b.setUint32(28, 8000, true); b.setUint16(32, 1, true); b.setUint16(34, 8, true); w(36, 'data'); b.setUint32(40, n, true);
     for (let i = 0; i < n; i++) b.setUint8(44 + i, 128);
     return URL.createObjectURL(new Blob([b], { type: 'audio/wav' })); })();
@@ -110,12 +113,17 @@ ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
     if (lockOn) { au.pause(); lockOn = false; return lockUI(); }
     au.src = SILENCE; au.play().then(() => { lockOn = true; lockUI(); render(); }).catch(e => alert('Impossible : ' + e.message));
   };
+  au.onended = () => { au.currentTime = 0; au.play().catch(() => {}); };
   au.onpause = () => { if (lockOn) au.play().catch(() => { lockOn = false; lockUI(); }); };   // le téléphone ne doit pas couper le lecteur
-  if ('mediaSession' in navigator) {
+  function handlers() {
+    if (!('mediaSession' in navigator)) return;
     const on = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch {} };
     on('nexttrack', () => send(cur + 1)); on('previoustrack', () => send(cur - 1));
     on('play', () => au.play()); on('pause', () => {});   // « pause » ne coupe pas la télécommande
+    for (const a of ['seekbackward', 'seekforward', 'seekto', 'skipad']) on(a, null);   // sinon ±10 s à la place de ⏮ ⏭
   }
+  handlers();
+  au.addEventListener('playing', handlers);
 
   if (!K) { $('err').textContent = 'Adresse incomplète : utilisez le lien de télécommande complet (avec #k=…).'; $('err').hidden = false; }
   const live = liveConnect(e => { if (!sending && want === null) { cur = e.i; render(); } status(true, e.n); });
