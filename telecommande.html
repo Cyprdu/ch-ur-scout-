@@ -34,6 +34,8 @@ button:disabled { opacity: .35; }
 h2 { margin: 24px 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--or); }
 ol { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
 ol button { display: flex; gap: 10px; width: 100%; text-align: left; padding: 12px 6px; border-bottom: 1px solid var(--line); font-size: 15.5px; }
+ol button.sy { padding: 7px 6px; font-size: 13px; color: var(--mut); font-style: italic; }
+ol button.sy span:first-child { color: var(--or); font-style: normal; }
 ol button.on { color: #1a1a1a; background: var(--or); border-radius: 8px; font-weight: 600; }
 ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
 .reset { display: block; width: 100%; margin-top: 18px; min-height: 46px; border-radius: 12px; border: 1px solid var(--line); color: var(--mut); font-size: 14.5px; }
@@ -95,14 +97,27 @@ window.liveConnect = function (onEtat) {
   const K = new URLSearchParams(location.hash.slice(1)).get('k') || '';
   let cur = -1, sending = false, want = null, lockOn = false, lastAct = '';
 
+  // ordre de la soirée : S = saynète (100 + n° du chant qui la précède), puis les chants
+  const S = n => 100 + n;
+  const PLAYLIST = [S(0), 1, S(1), 2, 3, S(3), 4, 5, S(5), 6, 7, S(7), 8, S(8), 9, S(9), 10, 11];
   const dernier = i => { const e = etatDe(i); return e.chant || e.apres || 0; };   // dernier chant atteint
-  const nextOf = i => Math.min(N, dernier(i) + 1);
-  const prevOf = i => { const e = etatDe(i); return e.chant ? Math.max(1, e.chant - 1) : e.apres ? e.apres : i; };
+  function nextOf(i) {
+    const k = PLAYLIST.indexOf(i);
+    if (k >= 0) return PLAYLIST[Math.min(k + 1, PLAYLIST.length - 1)];
+    if (i <= 0) return PLAYLIST[0];
+    return Math.min(N, dernier(i) + 1);   // saynète ajoutée à la main : on reprend au chant suivant
+  }
+  function prevOf(i) {
+    const k = PLAYLIST.indexOf(i);
+    if (k > 0) return PLAYLIST[k - 1];
+    if (k === 0 || i <= 0) return i;
+    return dernier(i) || i;
+  }
   const titre = n => `${n}. ${NOEL[n - 1].titre}`;
   function name(i) {
     const e = etatDe(i);
     if (e.chant) return titre(e.chant);
-    if (e.saynete) return 'Saynète (entre deux chants)';
+    if (e.saynete) return 'Saynète';
     if (e.accueil) return 'Accueil · « Bienvenue »';
     return 'Rien (avant le concert)';
   }
@@ -110,15 +125,17 @@ window.liveConnect = function (onEtat) {
   function render() {
     const e = etatDe(cur);
     $('curT').textContent = name(cur);
-    $('list').innerHTML = NOEL.map((s, k) => `<li><button data-n="${k + 1}" class="${e.chant === k + 1 ? 'on' : ''}"><span>${k + 1}</span><span>${s.titre}</span></button></li>`).join('');
-    $('prevB').disabled = !(e.chant > 1 || e.apres);
-    $('nextB').disabled = dernier(cur) >= N && !e.saynete && e.chant === N;
+    $('list').innerHTML = PLAYLIST.map(i => (i >= 100
+      ? `<li><button data-i="${i}" class="sy${i === cur ? ' on' : ''}"><span>✦</span><span>Saynète</span></button></li>`
+      : `<li><button data-i="${i}" class="${i === cur ? 'on' : ''}"><span>${i}</span><span>${NOEL[i - 1].titre}</span></button></li>`)).join('');
+    $('prevB').disabled = prevOf(cur) === cur;
+    $('nextB').disabled = nextOf(cur) === cur;
     $('sayB').className = e.saynete ? 'on' : ''; $('accB').className = e.accueil ? 'on' : '';
     $('resetB').disabled = cur < 0;
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: name(cur),
-        artist: '⏭ ' + (dernier(cur) >= N && e.chant === N ? 'fin' : titre(nextOf(cur))),
+        artist: '⏭ ' + (nextOf(cur) === cur ? 'fin' : name(nextOf(cur))),
         album: 'Télécommande · Concert de Noël',
         artwork: [{ src: new URL('noel/pochette-512.jpg', location.href).href, sizes: '512x512', type: 'image/jpeg' }],
       });
@@ -151,7 +168,7 @@ window.liveConnect = function (onEtat) {
   $('sayB').onclick = () => send(100 + dernier(cur));
   $('accB').onclick = () => send(0);
   $('resetB').onclick = () => { if (confirm('Revenir à « avant le concert » ? Plus rien ne sera affiché comme en cours.')) send(-1); };
-  $('list').onclick = e => { const b = e.target.closest('button'); if (b && confirm('Passer au chant « ' + titre(+b.dataset.n) + ' » ?')) send(+b.dataset.n); };
+  $('list').onclick = e => { const b = e.target.closest('button'); if (b && confirm('Passer à « ' + name(+b.dataset.i) + ' » ?')) send(+b.dataset.i); };
 
   // écran verrouillé : un long son silencieux fait apparaître les commandes ⏮ ⏭ du téléphone
   const DUREE = 600;

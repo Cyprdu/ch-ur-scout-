@@ -146,7 +146,7 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
       <span><span class="t"><span hidden>Chant ${i + 1} : </span>${s.titre}</span>${i === liveSong ? '<br><span class="tag">En ce moment</span>' : ''}</span>
       <span class="go" aria-hidden="true">›</span></button></li>`).join('');
     $('now').hidden = !liveStep.saynete;
-    $('now').innerHTML = '<span class="dot"></span>Entre deux chants';
+    $('now').innerHTML = '<span class="dot"></span>Saynète en cours';
     $('welcome').hidden = !liveStep.accueil;
     tick();
   }
