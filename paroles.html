@@ -21,15 +21,20 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 .flakes { position: fixed; inset: 0; pointer-events: none; z-index: -1; color: var(--or2); }
 .flakes svg { position: absolute; opacity: .16; }
-.poster { margin: 0 -16px; position: relative; aspect-ratio: 1413 / 1250; overflow: hidden; }
+.poster { margin: 0 -16px; position: relative; aspect-ratio: 1413 / 1500; overflow: hidden; }
 .poster img { width: 100%; height: auto; display: block; }
-.poster::after { content: ''; position: absolute; inset: auto 0 0; height: 30%; background: linear-gradient(transparent, var(--bg)); }
+.poster::after { content: ''; position: absolute; inset: auto 0 0; height: 6%; background: linear-gradient(transparent, var(--bg)); }
 h1 { font: 600 clamp(40px, 11vw, 54px)/1 Caveat, cursive; margin: 4px 0 6px; }
 .sub { margin: 0 0 18px; color: var(--mut); font-size: 14.5px; }
 .now { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--or2); color: var(--mut); font-size: 13.5px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--or); flex: none; animation: pulse 2s infinite; }
 @keyframes pulse { 50% { opacity: .25; } }
 ol { list-style: none; margin: 0; padding: 0; }
+.welcome { margin: 0 0 18px; padding: 18px 18px 20px; border: 1.5px solid var(--or); border-radius: 14px; background: rgba(201, 173, 104, .07); text-align: center; }
+.welcome b { display: block; font: 600 44px/1 Caveat, cursive; color: var(--or); }
+.welcome p { margin: 8px 0 0; color: var(--mut); font-size: 14.5px; }
+.welcome .cd { margin: 12px 0 2px; color: var(--txt); font-size: 15px; }
+.welcome .cd strong { display: block; font-size: 30px; font-weight: 600; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
 .song { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 8px 12px 8px 4px; border-bottom: 1px solid var(--line); border-radius: 0; }
 .num { font: 600 38px/1 Caveat, cursive; color: var(--or); text-align: center; }
 .song .t { font-weight: 500; line-height: 1.3; }
@@ -43,8 +48,9 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
 .back { display: grid; place-items: center; width: 46px; height: 46px; flex: none; border-radius: 50%; color: var(--or); }
 .back svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .back:active { background: rgba(201, 173, 104, .15); }
-.bar .num { font-size: 34px; width: auto; margin-right: 4px; }
-.bar h2 { flex: 1; min-width: 0; margin: 0; font-size: 18px; font-weight: 600; line-height: 1.25; }
+.bar .ttl { flex: 1; min-width: 0; padding: 2px 0 2px 4px; }
+.bar .kick { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--or); }
+.bar h2 { margin: 1px 0 0; font-size: 18px; font-weight: 600; line-height: 1.25; }
 .onair { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 5px 11px; border-radius: 99px; background: rgba(201, 173, 104, .14); color: var(--or); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .lyrics.live { border-left: 2px solid var(--or); padding-left: 14px; margin-left: -16px; }
 .part { margin: 26px 0 0; }
@@ -54,9 +60,12 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
 .part.r p { font-style: italic; }
 .lyrics { padding-bottom: 24px; }
 /* bandeau « en ce moment » quand on lit un autre chant */
-.pill { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 5; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 99px; background: var(--or); color: #1a1a1a; font-weight: 600; font-size: 14.5px; box-shadow: 0 6px 24px rgba(0, 0, 0, .5); white-space: nowrap; }
-.pill span { overflow: hidden; text-overflow: ellipsis; }
-.pill .dot { background: #1a1a1a; }
+.pill { position: fixed; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 5; display: flex; align-items: center; gap: 12px; max-width: 560px; margin: 0 auto; padding: 10px 14px 10px 16px; border-radius: 14px; border: 1px solid var(--or2); background: rgba(26, 26, 26, .92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 8px 28px rgba(0, 0, 0, .55); }
+.pill .dot { flex: none; }
+.pill .txt { flex: 1; min-width: 0; }
+.pill small { display: block; font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--or); }
+.pill .tt { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; font-size: 15px; }
+.pill .go { color: var(--or); font-size: 24px; line-height: 1; }
 </style>
 </head>
 <body>
@@ -66,6 +75,7 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
     <div class="poster"><img src="noel/affiche.jpg" width="1413" height="2000" alt="Le chœur scout Adjuva Nos présente le concert de Noël"></div>
     <h1>Les paroles</h1>
     <p class="sub">Touchez un chant pour lire ses paroles. Le chant en cours est encadré.</p>
+    <div class="welcome" id="welcome" hidden><b>Bienvenue !</b><p>Le concert va bientôt commencer.<br>Pensez à mettre votre téléphone en silencieux.</p><p class="cd" id="cd"></p></div>
     <div class="now" id="now" hidden></div>
     <ol id="list"></ol>
     <footer>Chœur scout Adjuva Nos · Concert de Noël · Église du Saint-Nom-de-Jésus, Lyon</footer>
@@ -76,34 +86,45 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
 
 <script src="noel/programme.js"></script>
 <script src="paroles/textes.js"></script>
-<script src="paroles/deroule.js"></script>
 <script src="paroles/live.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const key = s => s.id || 'trois-routes';
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  let liveSong = -1, liveStep = null, open = -1;
+  let liveSong = -1, liveStep = {}, open = -1, lastLive = -1;
 
   function renderList() {
     $('list').innerHTML = NOEL.map((s, i) => `<li><button class="song${i === liveSong ? ' live' : ''}" data-i="${i}">
       <span class="num" aria-hidden="true">${i + 1}</span>
       <span><span class="t"><span hidden>Chant ${i + 1} : </span>${s.titre}</span>${i === liveSong ? '<br><span class="tag">En ce moment</span>' : ''}</span>
       <span class="go" aria-hidden="true">›</span></button></li>`).join('');
-    $('now').hidden = !(liveStep && liveStep.saynete);
+    $('now').hidden = !liveStep.saynete;
     $('now').innerHTML = '<span class="dot"></span>Entre deux chants';
+    $('welcome').hidden = !liveStep.accueil;
+    tick();
   }
+  // compte à rebours de l'accueil
+  function tick() {
+    if (!liveStep.accueil) return;
+    const s = Math.round((DEBUT_CONCERT - Date.now()) / 1000);
+    if (s <= 0) { $('cd').innerHTML = '<strong>Installez-vous…</strong>'; return; }
+    const j = Math.floor(s / 86400), h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60, sec = s % 60, z = n => String(n).padStart(2, '0');
+    $('cd').innerHTML = 'Début dans<strong>' + (j ? `${j} j ${h} h ${z(m)} min` : h ? `${h} h ${z(m)} min ${z(sec)} s` : `${m} min ${z(sec)} s`) + '</strong>';
+  }
+  setInterval(tick, 1000);
   function renderText(i) {
     const s = NOEL[i], parts = TEXTES[key(s)] || [];
     const live = i === liveSong;
     $('text').innerHTML = `<div class="bar${live ? ' live' : ''}"><button class="back" id="back" aria-label="Tous les chants"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <span class="num" aria-hidden="true">${i + 1}</span><h2>${s.titre}</h2>${live ? '<span class="onair"><span class="dot"></span>En cours</span>' : ''}</div>
+      <div class="ttl"><span class="kick">Chant ${i + 1}</span><h2>${s.titre}</h2></div>${live ? '<span class="onair"><span class="dot"></span>En cours</span>' : ''}</div>
       <div class="lyrics${live ? ' live' : ''}">${parts.map(p => `<div class="part${p.r ? ' r' : ''}"><h3>${p.t}${p.s ? ` <small>· ${p.s}</small>` : ''}</h3><p>${p.l.map(esc).join('<br>')}</p></div>`).join('')}</div>`;
   }
+  // pastille uniquement sur la page d'un chant qui n'est pas celui chanté en ce moment
   function renderPill() {
-    const show = liveSong >= 0 && open !== liveSong;
+    const show = open >= 0 && liveSong >= 0 && open !== liveSong;
     $('pill').hidden = !show;
-    if (show) $('pill').innerHTML = `<span class="dot"></span><span>En ce moment : ${liveSong + 1}. ${NOEL[liveSong].titre}</span>`;
+    if (show) $('pill').innerHTML = `<span class="dot"></span><span class="txt"><small>En ce moment</small><span class="tt">${NOEL[liveSong].titre}</span></span><span class="go" aria-hidden="true">›</span>`;
   }
   // navigation : #3 = paroles du 3e chant (le bouton « retour » du téléphone fonctionne)
   function route() {
@@ -119,12 +140,15 @@ footer { color: var(--mut); font-size: 13px; padding: 28px 0 8px; text-align: ce
   $('text').onclick = e => {
     if (e.target.closest('#back')) { if (fromList) history.back(); else go(-1); return; }
   };
-  $('pill').onclick = () => go(liveSong);
+  $('pill').onclick = () => { if (liveSong >= 0) location.replace('#' + (liveSong + 1)); };
   window.addEventListener('hashchange', route);
 
   liveConnect(e => {
-    liveStep = DEROULE[e.i] || null;
-    liveSong = liveStep && liveStep.chant ? liveStep.chant - 1 : -1;
+    liveStep = etatDe(e.i);
+    liveSong = liveStep.chant && NOEL[liveStep.chant - 1] ? liveStep.chant - 1 : -1;
+    // on lisait le chant qui était en direct et on passe au suivant : on suit automatiquement
+    if (open >= 0 && open === lastLive && liveSong >= 0 && liveSong !== open) { if (liveSong >= 0) lastLive = liveSong; location.replace('#' + (liveSong + 1)); return; }
+    if (liveSong >= 0) lastLive = liveSong;
     if (open >= 0) { const y = scrollY; renderText(open); scrollTo(0, y); } else renderList();
     renderPill();
   });

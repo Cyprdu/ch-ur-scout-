@@ -1,6 +1,6 @@
 /* Direct du concert : l'étape en cours (chant ou saynète), envoyée à tous les téléphones.
    Les fichiers du site sont servis directement par Cloudflare ; ce script ne reçoit que /live/…
-   - GET  /live/ws     : WebSocket, reçoit {i, n} à chaque changement (i = index dans paroles/deroule.js)
+   - GET  /live/ws     : WebSocket, reçoit {i, n} à chaque changement (i : voir etatDe dans paroles/live.js)
    - GET  /live/etat   : {i, n} (secours si le WebSocket ne passe pas)
    - POST /live/etape  : {k, i} — k = code de la télécommande (son empreinte SHA-256 est dans wrangler.jsonc) */
 import { DurableObject } from 'cloudflare:workers';
