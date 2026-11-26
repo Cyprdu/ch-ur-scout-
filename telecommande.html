@@ -226,8 +226,11 @@ window.liveConnect = function (onEtat) {
       on('seekbackward', null); on('seekforward', null);
       on('nexttrack', () => next('⏭')); on('previoustrack', () => prev('⏮'));
     }
-    on('seekto', null); on('skipad', null);
+    // Ne JAMAIS toucher à « skipad » ni « nextslide » : dans Safari ils pilotent le même bouton ⏭ que
+    // « nexttrack », et les mettre à null éteignait ⏭ sur l'écran verrouillé.
+    on('seekto', null);
     on('play', () => au.play()); on('pause', () => {});   // « pause » ne coupe pas la télécommande
+    if (mode !== 'sauts') on('nexttrack', () => next('⏭'));   // redéclaré en dernier, par sécurité
     if (lockOn) {
       try { ms.playbackState = 'playing'; } catch {}
       try { ms.setPositionState({ duration: DUREE, playbackRate: 1, position: Math.min(au.currentTime || 0, DUREE) }); } catch {}
