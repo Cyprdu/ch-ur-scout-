@@ -30,6 +30,7 @@ button:disabled { opacity: .35; }
 .modes button.on { background: var(--or); color: #1a1a1a; border-color: var(--or); }
 .lock { display: block; width: 100%; margin-top: 10px; min-height: 52px; border-radius: 12px; border: 1px dashed var(--or2); color: var(--or); font-weight: 600; }
 .lock.on { border-style: solid; background: rgba(201, 173, 104, .1); }
+.alt { display: block; margin: 6px 2px 0; padding: 6px 0; color: var(--or); font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
 .help { color: var(--mut); font-size: 13.5px; margin: 8px 2px 0; }
 h2 { margin: 24px 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--or); }
 ol { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
@@ -50,6 +51,7 @@ ol span:first-child { width: 22px; flex: none; text-align: right; opacity: .7; }
 <div class="modes"><button id="sayB">Saynète en cours</button><button id="accB">Accueil</button></div>
 <button class="lock" id="lockB"></button>
 <p class="help" id="help"></p>
+<button class="alt" id="altB"></button>
 <h2>Les chants</h2>
 <ol id="list"></ol>
 <button class="reset" id="resetB">Avant le concert (rien d’affiché)</button>
@@ -176,11 +178,23 @@ window.liveConnect = function (onEtat) {
     w(0, 'RIFF'); b.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, 8000, true); b.setUint32(28, 8000, true); b.setUint16(32, 1, true); b.setUint16(34, 8, true); w(36, 'data'); b.setUint32(40, n, true);
     for (let i = 0; i < n; i++) b.setUint8(44 + i, 128);
     return URL.createObjectURL(new Blob([b], { type: 'audio/wav' })); })();
+  // deux façons d'afficher les commandes sur l'écran verrouillé :
+  // « pistes » = ⏮ ⏭ (piste précédente / suivante), « sauts » = boutons ±10 s détournés en précédent / suivant
+  let mode = 'pistes';
+  try { mode = localStorage.getItem('telecommande-mode') || 'pistes'; } catch {}
   function lockUI() {
     $('lockB').className = 'lock' + (lockOn ? ' on' : '');
     $('lockB').textContent = lockOn ? '✓ Commandes sur l’écran verrouillé activées' : 'Activer les commandes sur l’écran verrouillé';
-    $('help').textContent = lockOn ? 'Verrouillez le téléphone : ⏭ = chant suivant, ⏮ = chant précédent.' + (lastAct ? ' Dernière commande reçue : ' + lastAct + '.' : '') : 'À activer avant le concert. Laissez cette page ouverte.';
+    const quoi = mode === 'sauts' ? '« +10 s » = chant suivant, « −10 s » = précédent.' : '⏭ = chant suivant, ⏮ = précédent.';
+    $('help').textContent = lockOn ? 'Verrouillez le téléphone : ' + quoi + (lastAct ? ' Dernière commande reçue : ' + lastAct + '.' : '') : 'À activer avant le concert. Laissez cette page ouverte.';
+    $('altB').textContent = mode === 'sauts' ? 'Revenir aux boutons ⏮ ⏭' : '⏭ grisé sur l’écran verrouillé ? Utiliser les boutons ±10 s à la place';
   }
+  $('altB').onclick = () => {
+    mode = mode === 'sauts' ? 'pistes' : 'sauts';
+    try { localStorage.setItem('telecommande-mode', mode); } catch {}
+    lockUI(); handlers();
+    if (lockOn) { au.pause(); lockOn = false; setTimeout(() => $('lockB').click(), 300); }   // on relance pour qu'iOS relise les commandes
+  };
   let startedAt = 0, lastT = 0, mine = false;
   $('lockB').onclick = () => {
     if (lockOn) { lockOn = false; au.pause(); return lockUI(); }
@@ -201,15 +215,31 @@ window.liveConnect = function (onEtat) {
   au.onended = () => { if (lockOn && Date.now() - startedAt < (DUREE - 5) * 1000) next('⏭ (fin de piste)'); restart(); };
   au.onpause = () => { if (lockOn) au.play().catch(() => { lockOn = false; lockUI(); }); };   // le téléphone ne doit pas couper le lecteur
   function handlers() {
-    if (!('mediaSession' in navigator)) return;
-    const on = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch {} };
-    on('nexttrack', () => next('⏭'));
-    on('previoustrack', () => prev('⏮'));
+    const ms = navigator.mediaSession;
+    if (!ms) return;
+    const on = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
+    if (mode === 'sauts') {
+      on('nexttrack', null); on('previoustrack', null);
+      on('seekforward', () => next('+10 s')); on('seekbackward', () => prev('−10 s'));
+    } else {
+      // iOS n'affiche ⏮ ⏭ que si aucune commande de saut n'est déclarée
+      on('seekbackward', null); on('seekforward', null);
+      on('nexttrack', () => next('⏭')); on('previoustrack', () => prev('⏮'));
+    }
+    on('seekto', null); on('skipad', null);
     on('play', () => au.play()); on('pause', () => {});   // « pause » ne coupe pas la télécommande
-    for (const a of ['seekbackward', 'seekforward', 'seekto', 'skipad']) on(a, null);   // sinon ±10 s à la place de ⏮ ⏭
+    if (lockOn) {
+      try { ms.playbackState = 'playing'; } catch {}
+      try { ms.setPositionState({ duration: DUREE, playbackRate: 1, position: Math.min(au.currentTime || 0, DUREE) }); } catch {}
+    }
   }
+  // Safari oublie les commandes déclarées avant que la page soit « en lecture » ou quand la lecture
+  // redémarre : on les redéclare au démarrage, puis régulièrement, et à chaque changement d'écran.
+  au.addEventListener('playing', () => { handlers(); setTimeout(handlers, 500); setTimeout(handlers, 1500); });
+  setInterval(() => { if (lockOn) handlers(); }, 2000);
+  document.addEventListener('visibilitychange', handlers);
+  window.addEventListener('pageshow', handlers);
   handlers();
-  au.addEventListener('playing', handlers);
 
   if (!K) { $('err').textContent = 'Adresse incomplète : utilisez le lien de télécommande complet (avec #k=…).'; $('err').hidden = false; }
   liveConnect(e => { if (!sending && want === null) { cur = e.i; render(); } status(true, e.n); });
